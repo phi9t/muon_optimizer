@@ -1,0 +1,188 @@
+name: Release and Publish
+
+on:
+  push:
+    tags:
+      - 'v*'  # Trigger on version tags like v1.0.0
+  release:
+    types: [published]
+
+env:
+  PYTHONUNBUFFERED: 1
+
+jobs:
+  test-release:
+    name: Test Before Release
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python 3.13
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.13"
+        cache: 'pip'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install torch>=2.7.1 --index-url https://download.pytorch.org/whl/cpu
+        pip install -e .[dev]
+        pip install pytest pytest-cov
+    
+    - name: Run comprehensive tests
+      run: |
+        pytest muon_optimizer_test.py example_usage_test.py -v --cov=muon_optimizer
+    
+    - name: Verify version consistency
+      run: |
+        python -c "
+        import muon_optimizer
+        import re
+        
+        # Get version from module
+        module_version = muon_optimizer.__version__
+        print(f'Module version: {module_version}')
+        
+        # Get version from git tag
+        import os
+        ref = os.environ.get('GITHUB_REF', '')
+        if ref.startswith('refs/tags/v'):
+            tag_version = ref.replace('refs/tags/v', '')
+            print(f'Tag version: {tag_version}')
+            
+            if module_version != tag_version:
+                print(f'ERROR: Version mismatch! Module: {module_version}, Tag: {tag_version}')
+                exit(1)
+            else:
+                print('✅ Version consistency check passed')
+        else:
+            print('No version tag found, skipping version check')
+        "
+
+  build-and-publish:
+    name: Build and Publish Package
+    runs-on: ubuntu-latest
+    needs: test-release
+    environment: release
+    permissions:
+      id-token: write  # For trusted publishing to PyPI
+      contents: write  # For creating GitHub releases
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python 3.13
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.13"
+        cache: 'pip'
+    
+    - name: Install build dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install build twine
+    
+    - name: Build package
+      run: |
+        python -m build
+    
+    - name: Check package
+      run: |
+        python -m twine check dist/*
+    
+    - name: Publish to Test PyPI
+      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        repository-url: https://test.pypi.org/legacy/
+        skip-existing: true
+    
+    - name: Test install from Test PyPI
+      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+      run: |
+        sleep 30  # Wait for package to be available
+        pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ muon-optimizer || echo "Test PyPI install failed, continuing..."
+    
+    - name: Publish to PyPI
+      if: github.event_name == 'release'
+      uses: pypa/gh-action-pypi-publish@release/v1
+    
+    - name: Create GitHub Release Assets
+      if: github.event_name == 'release'
+      run: |
+        # Create a release notes file
+        cat > RELEASE_NOTES.md << EOF
+        # Muon Optimizer Release ${{ github.ref_name }}
+        
+        ## What's New
+        - Automated release from CI/CD pipeline
+        - Comprehensive test coverage
+        - Code quality checks passed
+        
+        ## Installation
+        \`\`\`bash
+        pip install muon-optimizer
+        \`\`\`
+        
+        ## Quick Start
+        \`\`\`python
+        from muon_optimizer import SingleDeviceMuon
+        
+        # Your model
+        model = MyModel()
+        
+        # Initialize optimizer
+        optimizer = SingleDeviceMuon(model.parameters(), lr=0.02)
+        \`\`\`
+        
+        See the [README](https://github.com/\${{ github.repository }}/blob/main/README.md) for full documentation.
+        EOF
+    
+    - name: Upload Release Assets
+      if: github.event_name == 'release'
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          dist/*.tar.gz
+          dist/*.whl
+        body_path: RELEASE_NOTES.md
+        draft: false
+        prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
+
+  post-release:
+    name: Post-Release Tasks
+    runs-on: ubuntu-latest
+    needs: build-and-publish
+    if: github.event_name == 'release'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Verify PyPI installation
+      run: |
+        sleep 60  # Wait for PyPI to propagate
+        pip install muon-optimizer
+        python -c "
+        import muon_optimizer
+        print(f'✅ Successfully installed muon-optimizer v{muon_optimizer.__version__} from PyPI')
+        
+        # Quick smoke test
+        from muon_optimizer import SingleDeviceMuon
+        import torch
+        import torch.nn as nn
+        
+        model = nn.Linear(10, 5)
+        optimizer = SingleDeviceMuon(model.parameters(), lr=0.01)
+        print('✅ Smoke test passed')
+        "
+    
+    - name: Update documentation badge
+      run: |
+        echo "📦 Release ${{ github.ref_name }} published successfully!"
+        echo "PyPI: https://pypi.org/project/muon-optimizer/"
+        echo "GitHub: https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }}"

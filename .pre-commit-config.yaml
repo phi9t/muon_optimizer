@@ -1,0 +1,120 @@
+# Pre-commit hooks configuration
+# See https://pre-commit.com for more information
+# Install with: pip install pre-commit && pre-commit install
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: '\.md$'
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-json
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: check-merge-conflict
+      - id: debug-statements
+      - id: check-docstring-first
+
+  - repo: https://github.com/psf/black
+    rev: 24.3.0
+    hooks:
+      - id: black
+        args: [--line-length=88]
+        files: '^(muon_optimizer|example_usage)\.py$'
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        args: [--profile=black, --line-length=88]
+        files: '^(muon_optimizer|example_usage)\.py$'
+
+  - repo: https://github.com/pycqa/flake8
+    rev: 7.0.0
+    hooks:
+      - id: flake8
+        args: [--max-line-length=88, --extend-ignore=E203,W503]
+        files: '^(muon_optimizer|example_usage)\.py$'
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.9.0
+    hooks:
+      - id: mypy
+        args: [--ignore-missing-imports, --no-strict-optional]
+        files: '^muon_optimizer\.py$'
+        additional_dependencies: [torch]
+
+  - repo: https://github.com/pycqa/bandit
+    rev: 1.7.5
+    hooks:
+      - id: bandit
+        args: [-r, -f, json, -o, bandit-report.json]
+        files: '^(muon_optimizer|example_usage)\.py$'
+
+  - repo: local
+    hooks:
+      - id: pytest-check
+        name: pytest-check
+        entry: python -m pytest muon_optimizer_test.py -x -v --tb=short
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [push]
+
+      - id: example-tests
+        name: example-tests
+        entry: python -m pytest example_usage_test.py::TestTableFunctions -v --tb=short
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [push]
+
+      - id: security-check
+        name: security-check
+        entry: python -c "
+import ast
+import sys
+
+def check_file_security(filename):
+    with open(filename, 'r') as f:
+        try:
+            tree = ast.parse(f.read())
+            # Basic security checks
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Call):
+                    if hasattr(node.func, 'id'):
+                        # Check for dangerous functions
+                        dangerous = ['eval', 'exec', '__import__']
+                        if node.func.id in dangerous:
+                            print(f'WARNING: Potentially dangerous function {node.func.id} found in {filename}')
+                            return False
+            return True
+        except Exception as e:
+            print(f'Error parsing {filename}: {e}')
+            return False
+
+files = ['muon_optimizer.py', 'example_usage.py']
+all_safe = all(check_file_security(f) for f in files)
+if not all_safe:
+    sys.exit(1)
+print('✅ Security check passed')
+"
+        language: system
+        pass_filenames: false
+        files: '^(muon_optimizer|example_usage)\.py$'
+
+# Configuration for specific tools
+ci:
+  autofix_commit_msg: |
+    [pre-commit.ci] auto fixes from pre-commit hooks
+
+    for more information, see https://pre-commit.ci
+  autofix_prs: true
+  autoupdate_branch: ''
+  autoupdate_commit_msg: '[pre-commit.ci] pre-commit autoupdate'
+  autoupdate_schedule: weekly
+  skip: [pytest-check, example-tests]  # Skip time-consuming tests in CI
+  submodules: false

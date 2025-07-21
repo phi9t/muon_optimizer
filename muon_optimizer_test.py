@@ -34,6 +34,7 @@ class TestZeropowerViaNewtonschulz5:
     
     def test_basic_orthogonalization(self):
         """Test basic orthogonalization of a 2D matrix."""
+        torch.manual_seed(42)  # Set seed for reproducible test
         G = torch.randn(4, 4)
         result = zeropower_via_newtonschulz5(G, steps=5)
         

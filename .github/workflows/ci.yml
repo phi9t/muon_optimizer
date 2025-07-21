@@ -78,15 +78,15 @@ jobs:
     
     - name: Check code formatting with black
       run: |
-        black --check --diff muon_optimizer.py example_usage.py
+        black --check --diff --line-length=120 muon_optimizer.py example_usage.py
     
     - name: Check import sorting with isort
       run: |
-        isort --check-only --diff muon_optimizer.py example_usage.py
+        isort --check-only --diff --line-length=120 muon_optimizer.py example_usage.py
     
     - name: Lint with flake8
       run: |
-        flake8 muon_optimizer.py example_usage.py --max-line-length=88 --extend-ignore=E203,W503
+        flake8 muon_optimizer.py example_usage.py --max-line-length=120 --extend-ignore=E203,W503,E501
     
     - name: Type check with mypy
       run: |

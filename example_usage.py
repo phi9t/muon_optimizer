@@ -200,9 +200,7 @@ def create_model_summary_table(model, optimizer_name: str) -> None:
         else:
             adam_params += param.numel()
 
-        table.add_row(
-            name, str(tuple(param.shape)), f"{param.numel():,}", param_type, opt_type
-        )
+        table.add_row(name, str(tuple(param.shape)), f"{param.numel():,}", param_type, opt_type)
 
     # Add summary row
     table.add_section()
@@ -238,21 +236,15 @@ def create_optimizer_config_table(optimizer) -> None:
             lr = group["lr"]
 
             if group["use_muon"]:
-                config = (
-                    f"momentum={group['momentum']}, ns_steps={group.get('ns_steps', 5)}"
-                )
+                config = f"momentum={group['momentum']}, ns_steps={group.get('ns_steps', 5)}"
             else:
-                config = (
-                    f"betas={group.get('betas', 'N/A')}, eps={group.get('eps', 'N/A')}"
-                )
+                config = f"betas={group.get('betas', 'N/A')}, eps={group.get('eps', 'N/A')}"
         else:
             # SingleDeviceMuon case
             opt_type = "Muon"
             num_params = len(group["params"])
             lr = group["lr"]
-            config = (
-                f"momentum={group['momentum']}, ns_steps={group.get('ns_steps', 5)}"
-            )
+            config = f"momentum={group['momentum']}, ns_steps={group.get('ns_steps', 5)}"
 
         table.add_row(
             str(i + 1),
@@ -276,9 +268,7 @@ def example_1_basic_muon():
     dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
 
     # Initialize Muon optimizer
-    optimizer = SingleDeviceMuon(
-        model.parameters(), lr=0.02, momentum=0.95, weight_decay=0.01
-    )
+    optimizer = SingleDeviceMuon(model.parameters(), lr=0.02, momentum=0.95, weight_decay=0.01)
 
     log().info(
         f"[yellow]Model[/yellow]: {type(model).__name__} with {sum(p.numel() for p in model.parameters()):,} parameters"
@@ -300,9 +290,7 @@ def example_1_basic_muon():
 
 def example_2_hybrid_optimization():
     """Example 2: Hybrid optimization with Muon and AdamW."""
-    log().info(
-        "\n[bold cyan]📚 Example 2: Hybrid Muon + AdamW Optimization[/bold cyan]"
-    )
+    log().info("\n[bold cyan]📚 Example 2: Hybrid Muon + AdamW Optimization[/bold cyan]")
 
     # Create model and data
     model = SimpleNet()
@@ -311,16 +299,12 @@ def example_2_hybrid_optimization():
     dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
 
     # Create parameter groups automatically
-    param_groups = create_muon_param_groups(
-        model, muon_lr=0.02, adam_lr=3e-4, muon_momentum=0.95, weight_decay=0.01
-    )
+    param_groups = create_muon_param_groups(model, muon_lr=0.02, adam_lr=3e-4, muon_momentum=0.95, weight_decay=0.01)
 
     # Initialize hybrid optimizer
     optimizer = SingleDeviceMuonWithAuxAdam(param_groups)
 
-    log().info(
-        f"[yellow]Model[/yellow]: {type(model).__name__} with hybrid optimization"
-    )
+    log().info(f"[yellow]Model[/yellow]: {type(model).__name__} with hybrid optimization")
 
     # Show configuration
     create_model_summary_table(model, "Hybrid Muon+AdamW")
@@ -441,20 +425,14 @@ def example_4_convolutional_network():
     dataloader = DataLoader(dataset, batch_size=16, shuffle=True)
 
     # Muon automatically handles conv layers by reshaping to 2D
-    optimizer = SingleDeviceMuon(
-        model.parameters(), lr=0.02, momentum=0.95, weight_decay=0.01
-    )
+    optimizer = SingleDeviceMuon(model.parameters(), lr=0.02, momentum=0.95, weight_decay=0.01)
 
-    log().info(
-        f"[yellow]Model[/yellow]: ConvNet with {sum(p.numel() for p in model.parameters()):,} parameters"
-    )
+    log().info(f"[yellow]Model[/yellow]: ConvNet with {sum(p.numel() for p in model.parameters()):,} parameters")
 
     # Show how conv layers are handled
     conv_analysis = []
     for name, param in model.named_parameters():
-        layer_type = (
-            "Convolutional" if "conv" in name else "Linear" if "fc" in name else "Other"
-        )
+        layer_type = "Convolutional" if "conv" in name else "Linear" if "fc" in name else "Other"
         muon_compatible = "Yes" if param.ndim >= 2 else "No"
 
         conv_analysis.append(
@@ -504,9 +482,7 @@ def example_4_convolutional_network():
 
 def example_5_learning_rate_scheduling():
     """Example 5: Using Muon with learning rate scheduling."""
-    log().info(
-        "\n[bold cyan]📚 Example 5: Muon with Learning Rate Scheduling[/bold cyan]"
-    )
+    log().info("\n[bold cyan]📚 Example 5: Muon with Learning Rate Scheduling[/bold cyan]")
 
     # Create model and data
     model = SimpleNet()
@@ -515,16 +491,12 @@ def example_5_learning_rate_scheduling():
     dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
 
     # Initialize optimizer and scheduler
-    optimizer = SingleDeviceMuon(
-        model.parameters(), lr=0.02, momentum=0.95, weight_decay=0.01
-    )
+    optimizer = SingleDeviceMuon(model.parameters(), lr=0.02, momentum=0.95, weight_decay=0.01)
 
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.9)
 
-    log().info(
-        f"[yellow]Initial learning rate[/yellow]: {optimizer.param_groups[0]['lr']:.6f}"
-    )
-    log().info(f"[yellow]Scheduler[/yellow]: StepLR (step_size=1, gamma=0.9)")
+    log().info(f"[yellow]Initial learning rate[/yellow]: {optimizer.param_groups[0]['lr']:.6f}")
+    log().info("[yellow]Scheduler[/yellow]: StepLR (step_size=1, gamma=0.9)")
 
     # Train with scheduler and track LR changes
     model.train()
@@ -698,9 +670,7 @@ def example_6_parameter_analysis():
 def run_all_examples():
     """Run all examples sequentially."""
     log().info("[bold cyan]🚀 Muon Optimizer Examples[/bold cyan]")
-    log().info(
-        "[yellow]Comprehensive demonstration of Muon optimizer usage patterns[/yellow]"
-    )
+    log().info("[yellow]Comprehensive demonstration of Muon optimizer usage patterns[/yellow]")
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     log().info(f"[yellow]Using device[/yellow]: {device}")
@@ -782,9 +752,7 @@ def main():
     run_all_examples()
 
     log().info("\n[bold cyan]🎉 Example usage demonstration completed![/bold cyan]")
-    log().info(
-        "[dim]Check the rich tables above for detailed results and analysis.[/dim]"
-    )
+    log().info("[dim]Check the rich tables above for detailed results and analysis.[/dim]")
 
 
 @functools.cache
@@ -807,9 +775,7 @@ if __name__ == "__main__":
         level=logging.INFO,
         format="%(message)s",
         datefmt="[%X]",
-        handlers=[
-            RichHandler(console=rich_console(), rich_tracebacks=True, markup=True)
-        ],
+        handlers=[RichHandler(console=rich_console(), rich_tracebacks=True, markup=True)],
     )
 
     main()

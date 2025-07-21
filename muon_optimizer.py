@@ -20,7 +20,7 @@ License: MIT
 """
 
 import logging
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 
 import torch
 import torch.distributed as dist
@@ -85,7 +85,9 @@ def zeropower_via_newtonschulz5(G: Tensor, steps: int) -> Tensor:
     if G.size(-2) > G.size(-1):
         X = X.mT
 
-    return X
+    # Return in bfloat16 format as intended (for numerical stability on GPU)
+    result: Tensor = X
+    return result
 
 
 def muon_update(
@@ -226,9 +228,7 @@ class Muon(Optimizer):
 
     def __init__(
         self,
-        params: Union[
-            Iterable[Union[Parameter, Tensor]], List[Union[Parameter, Tensor]]
-        ],
+        params: Union[Iterable[Union[Parameter, Tensor]], List[Union[Parameter, Tensor]]],
         lr: float = 0.02,
         weight_decay: float = 0,
         momentum: float = 0.95,
@@ -237,17 +237,13 @@ class Muon(Optimizer):
         if not isinstance(lr, (int, float)) or lr < 0:
             raise ValueError(f"Learning rate must be a non-negative number, got {lr}")
         if not isinstance(weight_decay, (int, float)) or weight_decay < 0:
-            raise ValueError(
-                f"Weight decay must be a non-negative number, got {weight_decay}"
-            )
+            raise ValueError(f"Weight decay must be a non-negative number, got {weight_decay}")
         if not isinstance(momentum, (int, float)) or not 0 <= momentum < 1:
             raise ValueError(f"Momentum must be in [0, 1), got {momentum}")
         if not isinstance(ns_steps, int) or ns_steps < 1:
             raise ValueError(f"ns_steps must be a positive integer, got {ns_steps}")
 
-        defaults = dict(
-            lr=lr, weight_decay=weight_decay, momentum=momentum, ns_steps=ns_steps
-        )
+        defaults = dict(lr=lr, weight_decay=weight_decay, momentum=momentum, ns_steps=ns_steps)
 
         # Convert to list if it's an iterable
         if not isinstance(params, list):
@@ -255,13 +251,9 @@ class Muon(Optimizer):
 
         # Validate parameters
         if len(params) < 1:
-            raise ValueError(
-                "params must be a non-empty iterable of Parameters or Tensors"
-            )
+            raise ValueError("params must be a non-empty iterable of Parameters or Tensors")
         if not all(isinstance(p, (Parameter, torch.Tensor)) for p in params):
-            raise ValueError(
-                "All params must be torch.nn.Parameter or torch.Tensor instances"
-            )
+            raise ValueError("All params must be torch.nn.Parameter or torch.Tensor instances")
 
         # Sort parameters by size for efficient distributed processing
         params = sorted(params, key=lambda x: x.size(), reverse=True)
@@ -270,12 +262,10 @@ class Muon(Optimizer):
 
         # Log initialization
         logger.info(f"Initialized Muon optimizer with {len(params)} parameters")
-        logger.info(
-            f"Learning rate: {lr}, Weight decay: {weight_decay}, Momentum: {momentum}"
-        )
+        logger.info(f"Learning rate: {lr}, Weight decay: {weight_decay}, Momentum: {momentum}")
 
     @torch.no_grad()
-    def step(self, closure: Optional[callable] = None) -> Optional[float]:
+    def step(self, closure: Optional[Callable[[], float]] = None) -> Optional[float]:  # type: ignore[override]
         """
         Perform a single optimization step.
 
@@ -302,9 +292,7 @@ class Muon(Optimizer):
                 rank = dist.get_rank()
 
                 # Pad parameters for even distribution
-                params_pad = params + [torch.empty_like(params[-1])] * (
-                    world_size - len(params) % world_size
-                )
+                params_pad = params + [torch.empty_like(params[-1])] * (world_size - len(params) % world_size)
 
                 for base_i in range(0, len(params), world_size):
                     if base_i + rank < len(params):
@@ -386,9 +374,7 @@ class SingleDeviceMuon(Optimizer):
 
     def __init__(
         self,
-        params: Union[
-            Iterable[Union[Parameter, Tensor]], List[Union[Parameter, Tensor]]
-        ],
+        params: Union[Iterable[Union[Parameter, Tensor]], List[Union[Parameter, Tensor]]],
         lr: float = 0.02,
         weight_decay: float = 0,
         momentum: float = 0.95,
@@ -397,25 +383,19 @@ class SingleDeviceMuon(Optimizer):
         if not isinstance(lr, (int, float)) or lr < 0:
             raise ValueError(f"Learning rate must be a non-negative number, got {lr}")
         if not isinstance(weight_decay, (int, float)) or weight_decay < 0:
-            raise ValueError(
-                f"Weight decay must be a non-negative number, got {weight_decay}"
-            )
+            raise ValueError(f"Weight decay must be a non-negative number, got {weight_decay}")
         if not isinstance(momentum, (int, float)) or not 0 <= momentum < 1:
             raise ValueError(f"Momentum must be in [0, 1), got {momentum}")
         if not isinstance(ns_steps, int) or ns_steps < 1:
             raise ValueError(f"ns_steps must be a positive integer, got {ns_steps}")
 
-        defaults = dict(
-            lr=lr, weight_decay=weight_decay, momentum=momentum, ns_steps=ns_steps
-        )
+        defaults = dict(lr=lr, weight_decay=weight_decay, momentum=momentum, ns_steps=ns_steps)
         super().__init__(params, defaults)
 
-        logger.info(
-            f"Initialized SingleDeviceMuon optimizer with {len(list(params))} parameters"
-        )
+        logger.info(f"Initialized SingleDeviceMuon optimizer with {len(list(params))} parameters")
 
     @torch.no_grad()
-    def step(self, closure: Optional[callable] = None) -> Optional[float]:
+    def step(self, closure: Optional[Callable[[], float]] = None) -> Optional[float]:  # type: ignore[override]
         """
         Perform a single optimization step.
 
@@ -501,9 +481,7 @@ class MuonWithAuxAdam(Optimizer):
 
             if group["use_muon"]:
                 # Muon-specific validation and defaults
-                group["params"] = sorted(
-                    group["params"], key=lambda x: x.size(), reverse=True
-                )
+                group["params"] = sorted(group["params"], key=lambda x: x.size(), reverse=True)
                 group["lr"] = group.get("lr", 0.02)
                 group["momentum"] = group.get("momentum", 0.95)
                 group["weight_decay"] = group.get("weight_decay", 0)
@@ -518,9 +496,7 @@ class MuonWithAuxAdam(Optimizer):
                     "use_muon",
                 }
                 if set(group.keys()) != expected_keys:
-                    raise ValueError(
-                        f"Muon parameter group {i} must contain exactly: {expected_keys}"
-                    )
+                    raise ValueError(f"Muon parameter group {i} must contain exactly: {expected_keys}")
             else:
                 # AdamW-specific validation and defaults
                 group["lr"] = group.get("lr", 3e-4)
@@ -537,9 +513,7 @@ class MuonWithAuxAdam(Optimizer):
                     "use_muon",
                 }
                 if set(group.keys()) != expected_keys:
-                    raise ValueError(
-                        f"AdamW parameter group {i} must contain exactly: {expected_keys}"
-                    )
+                    raise ValueError(f"AdamW parameter group {i} must contain exactly: {expected_keys}")
 
         super().__init__(param_groups, dict())
 
@@ -551,7 +525,7 @@ class MuonWithAuxAdam(Optimizer):
         )
 
     @torch.no_grad()
-    def step(self, closure: Optional[callable] = None) -> Optional[float]:
+    def step(self, closure: Optional[Callable[[], float]] = None) -> Optional[float]:  # type: ignore[override]
         """
         Perform a single optimization step.
 
@@ -575,9 +549,7 @@ class MuonWithAuxAdam(Optimizer):
                     world_size = dist.get_world_size()
                     rank = dist.get_rank()
 
-                    params_pad = params + [torch.empty_like(params[-1])] * (
-                        world_size - len(params) % world_size
-                    )
+                    params_pad = params + [torch.empty_like(params[-1])] * (world_size - len(params) % world_size)
 
                     for base_i in range(0, len(params), world_size):
                         if base_i + rank < len(params):
@@ -700,9 +672,7 @@ class SingleDeviceMuonWithAuxAdam(Optimizer):
                     "use_muon",
                 }
                 if set(group.keys()) != expected_keys:
-                    raise ValueError(
-                        f"Muon parameter group {i} must contain exactly: {expected_keys}"
-                    )
+                    raise ValueError(f"Muon parameter group {i} must contain exactly: {expected_keys}")
             else:
                 # AdamW-specific validation and defaults
                 group["lr"] = group.get("lr", 3e-4)
@@ -719,9 +689,7 @@ class SingleDeviceMuonWithAuxAdam(Optimizer):
                     "use_muon",
                 }
                 if set(group.keys()) != expected_keys:
-                    raise ValueError(
-                        f"AdamW parameter group {i} must contain exactly: {expected_keys}"
-                    )
+                    raise ValueError(f"AdamW parameter group {i} must contain exactly: {expected_keys}")
 
         super().__init__(param_groups, dict())
 
@@ -733,7 +701,7 @@ class SingleDeviceMuonWithAuxAdam(Optimizer):
         )
 
     @torch.no_grad()
-    def step(self, closure: Optional[callable] = None) -> Optional[float]:
+    def step(self, closure: Optional[Callable[[], float]] = None) -> Optional[float]:  # type: ignore[override]
         """
         Perform a single optimization step.
 
@@ -863,9 +831,7 @@ def create_muon_param_groups(
         },
     ]
 
-    logger.info(
-        f"Created parameter groups: {len(muon_params)} Muon parameters, {len(adam_params)} AdamW parameters"
-    )
+    logger.info(f"Created parameter groups: {len(muon_params)} Muon parameters, {len(adam_params)} AdamW parameters")
 
     return param_groups
 

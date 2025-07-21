@@ -12,10 +12,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Code Quality
 The project includes development dependencies for code quality tools (in setup.py extras_require):
-- Code formatting: `black muon_optimizer.py`
-- Import sorting: `isort muon_optimizer.py`
-- Linting: `flake8 muon_optimizer.py`
+- Code formatting: `black --line-length=120 muon_optimizer.py`
+- Import sorting: `isort --line-length=120 muon_optimizer.py`
+- Linting: `flake8 muon_optimizer.py --max-line-length=120 --extend-ignore=E203,W503,E501`
 - Type checking: `mypy muon_optimizer.py`
+
+Note: The project uses a 120-character line length limit with E501 (line too long) errors ignored for flexibility.
 
 ### CI/CD Pipeline
 The project uses GitHub Actions for continuous integration and deployment:

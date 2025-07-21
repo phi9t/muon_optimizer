@@ -1,0 +1,18 @@
+[project]
+name = "muon_optimizer"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "dash>=3.1.1",
+    "dash-bootstrap-components>=2.0.3",
+    "matplotlib>=3.10.3",
+    "numpy>=2.3.1",
+    "pillow>=11.3.0",
+    "plotly>=6.2.0",
+    "rich>=14.0.0",
+    "seaborn>=0.13.2",
+    "torch>=2.7.1",
+    "torchvision>=0.22.1",
+]

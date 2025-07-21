@@ -1,6 +1,6 @@
-# CI/CD Configuration
+# CI/CD Configuration Guide
 
-This directory contains the complete CI/CD pipeline configuration for the Muon Optimizer project.
+This guide provides comprehensive documentation for the CI/CD pipeline configuration in the Muon Optimizer project.
 
 ## 🔄 Workflows
 

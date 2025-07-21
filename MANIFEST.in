@@ -1,0 +1,50 @@
+# Include the main module
+include muon_optimizer.py
+
+# Include documentation and config files
+include README.md
+include LICENSE
+include CLAUDE.md
+include CONTRIBUTING.md
+include pyproject.toml
+include uv.lock
+
+# Include example and benchmark scripts (not part of package but useful)
+include example_usage.py
+include minimalist_quadratic_optimization.py
+include mnist_optimizer_benchmark.py
+
+# Include test files for development
+include muon_optimizer_test.py
+include example_usage_test.py
+
+# Include CI/CD configuration
+recursive-include .github *
+include .github/CI_CD_GUIDE.md
+
+# Include pre-commit configuration
+include .pre-commit-config.yaml
+
+# Exclude build artifacts and cache
+exclude *.pyc
+exclude *.pyo
+exclude *.pyd
+exclude .DS_Store
+exclude __pycache__
+exclude .pytest_cache
+exclude .mypy_cache
+exclude .coverage
+exclude build
+exclude dist
+exclude *.egg-info
+
+# Exclude development artifacts
+exclude .venv
+exclude venv
+exclude .env
+exclude .git
+exclude .gitignore
+
+# Exclude data directories
+exclude data
+recursive-exclude data *

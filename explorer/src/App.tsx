@@ -4,13 +4,15 @@ import { REPO_HOME, logoMarkUrl } from './lib/assets'
 import BenchmarksExplorer from './benchmarks/BenchmarksExplorer'
 import LandscapesExplorer from './landscapes/LandscapesExplorer'
 import ReferenceExplorer from './reference/ReferenceExplorer'
+import QwenLogitsExplorer from './qwen/QwenLogitsExplorer'
 
-export type ExplorerFamily = 'benchmarks' | 'landscapes' | 'reference'
+export type ExplorerFamily = 'benchmarks' | 'landscapes' | 'reference' | 'qwen'
 
 const FAMILY_SUBTITLES: Record<ExplorerFamily, string> = {
   benchmarks: 'MNIST CNN training — Muon vs SGD vs Adam',
   landscapes: '2D loss surfaces and optimizer trajectories',
   reference: 'Algorithm overview, API classes, and usage snippets',
+  qwen: 'Qwen teacher-student logits comparison',
 }
 
 export default function App() {
@@ -73,6 +75,14 @@ export default function App() {
             >
               Reference
             </button>
+            <button
+              type="button"
+              className={`family-switch-btn ${family === 'qwen' ? 'active' : ''}`}
+              aria-pressed={family === 'qwen'}
+              onClick={() => setFamily('qwen')}
+            >
+              Qwen Logits
+            </button>
           </div>
         </header>
 
@@ -80,6 +90,7 @@ export default function App() {
           {family === 'benchmarks' && <BenchmarksExplorer />}
           {family === 'landscapes' && <LandscapesExplorer />}
           {family === 'reference' && <ReferenceExplorer />}
+          {family === 'qwen' && <QwenLogitsExplorer />}
         </div>
       </div>
     </div>

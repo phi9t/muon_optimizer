@@ -12,6 +12,12 @@
       "name": "2D Landscapes",
       "description": "Classic 2D optimization benchmarks with trajectory overlays.",
       "data_file": "landscapes/index.json"
+    },
+    {
+      "id": "qwen_logits",
+      "name": "Qwen Logits",
+      "description": "Teacher vs student token-level logit comparison for curated prompts.",
+      "data_file": "qwen_logits.json"
     }
   ]
 }

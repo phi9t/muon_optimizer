@@ -19,7 +19,9 @@ _LAYER_TENSOR_SUFFIXES = (
     "input_layernorm.weight",
     "post_attention_layernorm.weight",
     "self_attn.q_proj.weight",
+    "self_attn.q_norm.weight",
     "self_attn.k_proj.weight",
+    "self_attn.k_norm.weight",
     "self_attn.v_proj.weight",
     "self_attn.o_proj.weight",
     "mlp.gate_proj.weight",
@@ -112,6 +114,16 @@ class QwenLayerStreamer:
             q = _reshape_qkv(q, batch_size, seq_len, self.spec.num_attention_heads, self.spec.head_dim)
             k = _reshape_qkv(k, batch_size, seq_len, self.spec.num_key_value_heads, self.spec.head_dim)
             v = _reshape_qkv(v, batch_size, seq_len, self.spec.num_key_value_heads, self.spec.head_dim)
+            q = rms_norm(
+                q,
+                layer_tensors[_layer_name(layer_index, "self_attn.q_norm.weight")],
+                self.spec.rms_norm_eps,
+            )
+            k = rms_norm(
+                k,
+                layer_tensors[_layer_name(layer_index, "self_attn.k_norm.weight")],
+                self.spec.rms_norm_eps,
+            )
 
             q, k = apply_rope(q, k, positions, self.spec.rope_theta)
             attention = causal_attention(q, k, v)
@@ -193,6 +205,16 @@ class QwenLayerStreamer:
             q = _reshape_qkv(q, 1, 1, self.spec.num_attention_heads, self.spec.head_dim)
             k_new = _reshape_qkv(k_new, 1, 1, self.spec.num_key_value_heads, self.spec.head_dim)
             v_new = _reshape_qkv(v_new, 1, 1, self.spec.num_key_value_heads, self.spec.head_dim)
+            q = rms_norm(
+                q,
+                layer_tensors[_layer_name(layer_index, "self_attn.q_norm.weight")],
+                self.spec.rms_norm_eps,
+            )
+            k_new = rms_norm(
+                k_new,
+                layer_tensors[_layer_name(layer_index, "self_attn.k_norm.weight")],
+                self.spec.rms_norm_eps,
+            )
 
             q, k_new = apply_rope(q, k_new, pos, self.spec.rope_theta)
             k = torch.cat([existing.key, k_new.to(torch.float32)], dim=1)

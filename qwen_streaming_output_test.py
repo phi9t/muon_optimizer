@@ -439,3 +439,73 @@ def test_streamed_aggregate_denominator_uses_total_steps(
     assert payload["aggregate"]["mean_kl_divergence"] == pytest.approx(expected_mean_kl)
     assert payload["aggregate"]["mean_cosine_similarity"] == pytest.approx(expected_mean_cos)
     assert payload["aggregate"]["mean_absolute_logit_delta"] == pytest.approx(expected_mean_abs)
+
+
+def test_streamed_comparison_allows_reserved_model_vocab_rows(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    tokenizer = _make_fake_tokenizer()
+    reserved_token_id = len(tokenizer)
+
+    student_logits = [
+        torch.tensor([0.1, 1.0, 2.4, 0.7, 0.3, 0.2, 9.0], dtype=torch.float32),
+    ]
+    teacher_logits = [
+        torch.tensor([1.1, 0.8, 2.0, 0.2, 0.4, 0.1, 7.5], dtype=torch.float32),
+    ]
+
+    fake_student = FakeStreamer(
+        spec=FakeSpec("student", vocab_size=reserved_token_id + 1),
+        model_label="student",
+        logits_by_step=student_logits,
+    )
+    fake_teacher = FakeStreamer(
+        spec=FakeSpec("teacher", vocab_size=reserved_token_id + 1),
+        model_label="teacher",
+        logits_by_step=teacher_logits,
+    )
+
+    def fake_loader(*, weight_map, dtype):  # noqa: ARG001
+        return FakeLoader(weight_map=weight_map, dtype=dtype)
+
+    def fake_from_model_id(model_id: str) -> FakeSpec:
+        return FakeSpec(model_id=model_id, vocab_size=reserved_token_id + 1)
+
+    def fake_streamer_ctor(*, spec, loader, memory_guard, model_label=None):  # noqa: ARG001
+        if model_label == "student":
+            return fake_student
+        return fake_teacher
+
+    def fake_transformers():
+        class AutoTokenizer:
+            @staticmethod
+            def from_pretrained(model_id: str) -> FakeTokenizer:  # noqa: ARG001
+                return tokenizer
+
+        return (AutoTokenizer,)
+
+    monkeypatch.setattr(comparison, "_load_transformers", fake_transformers)
+    monkeypatch.setattr(comparison, "SafetensorWeightLoader", fake_loader)
+    monkeypatch.setattr(comparison, "QwenStreamedModelSpec", SimpleNamespace(from_model_id=fake_from_model_id))
+    monkeypatch.setattr(comparison, "QwenLayerStreamer", fake_streamer_ctor)
+    monkeypatch.setattr(comparison, "MemoryGuard", FakeMemoryGuard)
+
+    args = _make_args(tmp_path=tmp_path, max_new_tokens=1)
+    comparison.run_streamed_comparison(args, prompts=["prompt one"])
+
+    payload = json.loads((tmp_path / "qwen_logits.json").read_text(encoding="utf-8"))
+    step = payload["prompts"][0]["steps"][0]
+    assert step["generated_token_id"] == reserved_token_id
+    assert step["generated_token"] == f"[token_{reserved_token_id}]"
+    assert payload["prompts"][0]["generated_text"] == f"[token_{reserved_token_id}]"
+
+
+def test_vocab_validation_rejects_mismatched_model_vocab() -> None:
+    tokenizer = _make_fake_tokenizer()
+    with pytest.raises(ValueError, match="Teacher and student model vocab sizes differ"):
+        comparison._validate_vocab_sizes(
+            tokenizer,
+            FakeSpec("teacher", vocab_size=len(tokenizer) + 1),
+            FakeSpec("student", vocab_size=len(tokenizer)),
+        )

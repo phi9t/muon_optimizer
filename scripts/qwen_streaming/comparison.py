@@ -72,6 +72,30 @@ def _safe_float(value: torch.Tensor) -> float:
     return float(value.detach().to(torch.float32).item())
 
 
+def _token_label(tokenizer: Any, token_id: int) -> str:
+    try:
+        token = tokenizer.convert_ids_to_tokens(int(token_id))
+    except (KeyError, IndexError, TypeError, ValueError):
+        token = None
+
+    if token is None:
+        return f"[token_{int(token_id)}]"
+    return str(token)
+
+
+def _decode_token_ids(tokenizer: Any, token_ids: List[int]) -> str:
+    if not token_ids:
+        return ""
+    try:
+        decoded = tokenizer.decode(token_ids, skip_special_tokens=True)
+    except (KeyError, IndexError, TypeError, ValueError):
+        decoded = ""
+
+    if decoded:
+        return str(decoded)
+    return "".join(_token_label(tokenizer, token_id) for token_id in token_ids)
+
+
 def _topk_payload(logits: torch.Tensor, tokenizer: Any, top_k: int) -> List[Dict[str, Any]]:
     k = min(int(top_k), int(logits.numel()))
     values, indices = torch.topk(logits, k=k, dim=0)
@@ -79,7 +103,7 @@ def _topk_payload(logits: torch.Tensor, tokenizer: Any, top_k: int) -> List[Dict
 
     out: List[Dict[str, Any]] = []
     for rank, (value, index) in enumerate(zip(values.tolist(), indices.tolist()), start=1):
-        token = tokenizer.convert_ids_to_tokens(int(index))
+        token = _token_label(tokenizer, int(index))
         out.append(
             {
                 "rank": rank,
@@ -138,7 +162,7 @@ def _ranked_delta_payload(
         rows.append(
             {
                 "token_id": token_id,
-                "token": tokenizer.convert_ids_to_tokens(token_id),
+                "token": _token_label(tokenizer, token_id),
                 "teacher_rank": teacher_ranks.get(token_id),
                 "student_rank": student_ranks.get(token_id),
                 "teacher_logit": teacher_logit,
@@ -213,15 +237,15 @@ def _validate_vocab_sizes(
     tokenizer_vocab = int(len(shared_tokenizer))
     if tokenizer_vocab <= 0:
         raise ValueError("Tokenizer vocabulary size is not positive.")
-    if tokenizer_vocab != teacher_spec.vocab_size:
+    if teacher_spec.vocab_size != student_spec.vocab_size:
         raise ValueError(
-            "Incompatible vocabularies detected. Teacher model vocab size does not match tokenizer. "
-            f"Got teacher={teacher_spec.vocab_size}, tokenizer={tokenizer_vocab}."
+            "Incompatible vocabularies detected. Teacher and student model vocab sizes differ. "
+            f"Got teacher={teacher_spec.vocab_size}, student={student_spec.vocab_size}."
         )
-    if tokenizer_vocab != student_spec.vocab_size:
+    if tokenizer_vocab > teacher_spec.vocab_size:
         raise ValueError(
-            "Incompatible vocabularies detected. Student model vocab size does not match tokenizer. "
-            f"Got student={student_spec.vocab_size}, tokenizer={tokenizer_vocab}."
+            "Incompatible vocabularies detected. Tokenizer exposes more IDs than the model output head. "
+            f"Got tokenizer={tokenizer_vocab}, model={teacher_spec.vocab_size}."
         )
 
 
@@ -232,19 +256,20 @@ def _vocab_plan_payload(
 ) -> Dict[str, Any]:
     tokenizer_vocab = int(len(shared_tokenizer))
     issues: list[str] = []
-    if tokenizer_vocab != teacher_spec.vocab_size:
+    if teacher_spec.vocab_size != student_spec.vocab_size:
         issues.append(
-            f"teacher spec vocab_size={teacher_spec.vocab_size} != tokenizer vocab_size={tokenizer_vocab}"
+            f"teacher spec vocab_size={teacher_spec.vocab_size} != student spec vocab_size={student_spec.vocab_size}"
         )
-    if tokenizer_vocab != student_spec.vocab_size:
+    if tokenizer_vocab > teacher_spec.vocab_size:
         issues.append(
-            f"student spec vocab_size={student_spec.vocab_size} != tokenizer vocab_size={tokenizer_vocab}"
+            f"tokenizer vocab_size={tokenizer_vocab} exceeds model vocab_size={teacher_spec.vocab_size}"
         )
 
     return {
         "tokenizer_vocab_size": tokenizer_vocab,
         "teacher_vocab_size": teacher_spec.vocab_size,
         "student_vocab_size": student_spec.vocab_size,
+        "reserved_model_token_count": max(teacher_spec.vocab_size - tokenizer_vocab, 0),
         "compatible": len(issues) == 0,
         "issues": issues,
     }
@@ -508,7 +533,7 @@ def run_streamed_comparison(args: Any, prompts: List[str] | None = None) -> None
                     {
                         "step_index": step_index,
                         "generated_token_id": generated_token_id,
-                        "generated_token": shared_tokenizer.convert_ids_to_tokens(generated_token_id),
+                        "generated_token": _token_label(shared_tokenizer, generated_token_id),
                         "top_teacher_tokens": step_metrics["top_teacher_tokens"],
                         "top_student_tokens": step_metrics["top_student_tokens"],
                         "overlapping_top_k_tokens": step_metrics["overlapping_top_k_tokens"],
@@ -572,7 +597,7 @@ def run_streamed_comparison(args: Any, prompts: List[str] | None = None) -> None
                 "prompt_index": prompt_index,
                 "prompt": prompt,
                 "generated_token_ids": generated_token_ids,
-                "generated_text": shared_tokenizer.decode(generated_token_ids, skip_special_tokens=True),
+                "generated_text": _decode_token_ids(shared_tokenizer, generated_token_ids),
                 "steps": step_payloads,
                 "prompt_length": prompt_len,
                 "steps_count": len(step_payloads),

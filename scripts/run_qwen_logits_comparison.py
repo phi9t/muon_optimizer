@@ -41,6 +41,12 @@ def parse_args() -> argparse.Namespace:
         help="Output JSON path (default: explorer/public/data/qwen_logits.json).",
     )
     parser.add_argument(
+        "--mode",
+        choices=("full", "streamed"),
+        default="full",
+        help="Comparison mode to run (default: full).",
+    )
+    parser.add_argument(
         "--top-k",
         type=int,
         default=DEFAULT_TOP_K,
@@ -51,6 +57,29 @@ def parse_args() -> argparse.Namespace:
         type=int,
         default=len(DEFAULT_PROMPTS),
         help="Limit number of curated prompts to evaluate (default: 6).",
+    )
+    parser.add_argument(
+        "--memory-cap-gb",
+        type=float,
+        default=6.0,
+        help="Streaming memory cap in GiB (default: 6.0).",
+    )
+    parser.add_argument(
+        "--max-new-tokens",
+        type=int,
+        default=8,
+        help="Maximum new tokens to generate in streamed mode (default: 8).",
+    )
+    parser.add_argument(
+        "--kv-cache-dir",
+        type=Path,
+        default=Path(".qwen_kv_cache"),
+        help="Directory for streamed KV cache files (default: .qwen_kv_cache).",
+    )
+    parser.add_argument(
+        "--dry-plan",
+        action="store_true",
+        help="Show streaming plan and exit without running generation (streamed mode only).",
     )
     parser.add_argument(
         "--student-model",
@@ -69,6 +98,19 @@ def parse_args() -> argparse.Namespace:
         help="Log level (default: INFO).",
     )
     return parser.parse_args()
+
+
+def _run_streamed(args: argparse.Namespace) -> None:
+    import sys
+    from pathlib import Path
+
+    scripts_dir = Path(__file__).resolve().parent
+    if str(scripts_dir) not in sys.path:
+        sys.path.insert(0, str(scripts_dir))
+
+    from qwen_streaming.comparison import run_streamed_comparison
+
+    run_streamed_comparison(args)
 
 
 def _load_transformers() -> Tuple[Any, Any]:
@@ -420,6 +462,10 @@ def _load_tokenizer(tokenizer_model: str) -> Any:
 
 
 def _run(args: argparse.Namespace) -> None:
+    if args.mode == "streamed":
+        _run_streamed(args)
+        return
+
     global torch
 
     logging.basicConfig(level=getattr(logging, args.log_level))

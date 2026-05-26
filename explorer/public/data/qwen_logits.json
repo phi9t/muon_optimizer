@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "generated_at_utc": "2026-05-26T18:28:43.989137Z",
+    "generated_at_utc": "2026-05-26T18:37:44.827401Z",
     "student_model": "Qwen/Qwen3-0.6B",
     "teacher_model": "Qwen/Qwen3-1.7B",
     "tokenizer_model": "Qwen/Qwen3-1.7B",
@@ -9,17 +9,21 @@
     "top_k": 10,
     "prompt_count": 1,
     "mode": "streamed",
-    "max_new_tokens": 1,
+    "max_new_tokens": 5,
     "memory_cap_gb": 6.0
   },
   "prompts": [
     {
       "prompt_index": 0,
-      "prompt": "Summarize the goal of this system in one sentence.",
+      "prompt": "The world breaks everyone, and afterward, many are strong at the broken places.",
       "generated_token_ids": [
-        576
+        576,
+        10865,
+        1879,
+        374,
+        537
       ],
-      "generated_text": " The",
+      "generated_text": " The broken world is not",
       "steps": [
         {
           "step_index": 0,
@@ -28,73 +32,73 @@
           "top_teacher_tokens": [
             {
               "rank": 1,
-              "token_id": 576,
-              "token": "\u0120The",
-              "logit": 25.52517318725586,
-              "probability": 0.6551586985588074
+              "token_id": 1096,
+              "token": "\u0120This",
+              "logit": 22.8343505859375,
+              "probability": 0.1972370445728302
             },
             {
               "rank": 2,
               "token_id": 220,
               "token": "\u0120",
-              "logit": 24.1152286529541,
-              "probability": 0.15996146202087402
+              "logit": 22.27625846862793,
+              "probability": 0.11287873983383179
             },
             {
               "rank": 3,
-              "token_id": 4710,
-              "token": "\u0120\u010a\u010a",
-              "logit": 22.364990234375,
-              "probability": 0.027790509164333344
+              "token_id": 2055,
+              "token": "\u0120So",
+              "logit": 21.673179626464844,
+              "probability": 0.06175873056054115
             },
             {
               "rank": 4,
-              "token_id": 1096,
-              "token": "\u0120This",
-              "logit": 22.228748321533203,
-              "probability": 0.024250874295830727
+              "token_id": 481,
+              "token": "\u0120-",
+              "logit": 21.45948028564453,
+              "probability": 0.04987579956650734
             },
             {
               "rank": 5,
-              "token_id": 2014,
-              "token": "\u0120To",
-              "logit": 21.2533016204834,
-              "probability": 0.009143158793449402
+              "token_id": 4710,
+              "token": "\u0120\u010a\u010a",
+              "logit": 21.436344146728516,
+              "probability": 0.0487351156771183
             },
             {
               "rank": 6,
-              "token_id": 715,
-              "token": "\u0120\u010a",
-              "logit": 21.180545806884766,
-              "probability": 0.008501564152538776
+              "token_id": 320,
+              "token": "\u0120(",
+              "logit": 21.217126846313477,
+              "probability": 0.039141472429037094
             },
             {
               "rank": 7,
-              "token_id": 758,
-              "token": "\u0120In",
-              "logit": 21.026947021484375,
-              "probability": 0.007291077636182308
+              "token_id": 358,
+              "token": "\u0120I",
+              "logit": 21.150150299072266,
+              "probability": 0.036605775356292725
             },
             {
               "rank": 8,
-              "token_id": 2303,
-              "token": "\u0120\u0120\u010a",
-              "logit": 20.649860382080078,
-              "probability": 0.005000634118914604
+              "token_id": 576,
+              "token": "\u0120The",
+              "logit": 21.120403289794922,
+              "probability": 0.03553289920091629
             },
             {
               "rank": 9,
-              "token_id": 21806,
-              "token": "\u0120Answer",
-              "logit": 20.251468658447266,
-              "probability": 0.003357420675456524
+              "token_id": 1959,
+              "token": "\u0120\u00e2\u0122\u0136",
+              "logit": 21.101852416992188,
+              "probability": 0.03487980738282204
             },
             {
               "rank": 10,
-              "token_id": 3197,
-              "token": "\u0120When",
-              "logit": 20.239784240722656,
-              "probability": 0.003318419214338064
+              "token_id": 106599,
+              "token": "\u00e8\u00bf\u013b\u00e5\u0131\u00a5\u00e8\u00af\u013f",
+              "logit": 20.70761489868164,
+              "probability": 0.02351575531065464
             }
           ],
           "top_student_tokens": [
@@ -102,103 +106,867 @@
               "rank": 1,
               "token_id": 576,
               "token": "\u0120The",
-              "logit": 17.927324295043945,
-              "probability": 0.49187666177749634
+              "logit": 14.664002418518066,
+              "probability": 0.10787368565797806
             },
             {
               "rank": 2,
-              "token_id": 4710,
-              "token": "\u0120\u010a\u010a",
-              "logit": 16.466083526611328,
-              "probability": 0.1140899583697319
+              "token_id": 1988,
+              "token": "\u0120But",
+              "logit": 14.632283210754395,
+              "probability": 0.10450571030378342
             },
             {
               "rank": 3,
-              "token_id": 7281,
-              "token": "\u0120Also",
-              "logit": 15.809579849243164,
-              "probability": 0.0591740757226944
+              "token_id": 1096,
+              "token": "\u0120This",
+              "logit": 14.390680313110352,
+              "probability": 0.08207544684410095
             },
             {
               "rank": 4,
-              "token_id": 330,
-              "token": "\u0120\"",
-              "logit": 14.98935604095459,
-              "probability": 0.026056304574012756
+              "token_id": 2055,
+              "token": "\u0120So",
+              "logit": 13.837133407592773,
+              "probability": 0.0471857525408268
             },
             {
               "rank": 5,
-              "token_id": 1096,
-              "token": "\u0120This",
-              "logit": 14.655439376831055,
-              "probability": 0.01865926943719387
+              "token_id": 1084,
+              "token": "\u0120It",
+              "logit": 13.82662582397461,
+              "probability": 0.046692539006471634
             },
             {
               "rank": 6,
-              "token_id": 3555,
-              "token": "\u0120What",
-              "logit": 14.566448211669922,
-              "probability": 0.017070502042770386
+              "token_id": 758,
+              "token": "\u0120In",
+              "logit": 13.3612699508667,
+              "probability": 0.029318787157535553
             },
             {
               "rank": 7,
-              "token_id": 715,
-              "token": "\u0120\u010a",
-              "logit": 14.557421684265137,
-              "probability": 0.01691710762679577
+              "token_id": 3555,
+              "token": "\u0120What",
+              "logit": 13.208806991577148,
+              "probability": 0.02517283707857132
             },
             {
               "rank": 8,
-              "token_id": 5443,
-              "token": "\u0120Use",
-              "logit": 14.185575485229492,
-              "probability": 0.01166367344558239
+              "token_id": 4354,
+              "token": "\u0120However",
+              "logit": 13.148605346679688,
+              "probability": 0.02370210736989975
             },
             {
               "rank": 9,
-              "token_id": 481,
-              "token": "\u0120-",
-              "logit": 14.155671119689941,
-              "probability": 0.011320043355226517
+              "token_id": 2938,
+              "token": "\u0120That",
+              "logit": 12.94407844543457,
+              "probability": 0.019317995756864548
             },
             {
               "rank": 10,
-              "token_id": 2303,
-              "token": "\u0120\u0120\u010a",
-              "logit": 14.133272171020508,
-              "probability": 0.011069304309785366
+              "token_id": 358,
+              "token": "\u0120I",
+              "logit": 12.917407989501953,
+              "probability": 0.01880958490073681
             }
           ],
           "overlapping_top_k_tokens": {
-            "count": 5,
+            "count": 4,
             "tokens": [
-              {
-                "token_id": 576,
-                "token": "\u0120The",
-                "teacher_rank": 1,
-                "student_rank": 1
-              },
-              {
-                "token_id": 4710,
-                "token": "\u0120\u010a\u010a",
-                "teacher_rank": 3,
-                "student_rank": 2
-              },
               {
                 "token_id": 1096,
                 "token": "\u0120This",
-                "teacher_rank": 4,
+                "teacher_rank": 1,
+                "student_rank": 3
+              },
+              {
+                "token_id": 2055,
+                "token": "\u0120So",
+                "teacher_rank": 3,
+                "student_rank": 4
+              },
+              {
+                "token_id": 358,
+                "token": "\u0120I",
+                "teacher_rank": 7,
+                "student_rank": 10
+              },
+              {
+                "token_id": 576,
+                "token": "\u0120The",
+                "teacher_rank": 8,
+                "student_rank": 1
+              }
+            ]
+          },
+          "ranked_logit_deltas": [
+            {
+              "token_id": 106599,
+              "token": "\u00e8\u00bf\u013b\u00e5\u0131\u00a5\u00e8\u00af\u013f",
+              "teacher_rank": 10,
+              "student_rank": null,
+              "teacher_logit": 20.70761489868164,
+              "student_logit": 8.63676929473877,
+              "teacher_probability": 0.02351575531065464,
+              "student_probability": 0.00026020847144536674,
+              "logit_delta": -12.070845603942871,
+              "absolute_logit_delta": 12.070845603942871
+            },
+            {
+              "token_id": 481,
+              "token": "\u0120-",
+              "teacher_rank": 4,
+              "student_rank": null,
+              "teacher_logit": 21.45948028564453,
+              "student_logit": 9.635354042053223,
+              "teacher_probability": 0.04987579956650734,
+              "student_probability": 0.0007063196389935911,
+              "logit_delta": -11.824126243591309,
+              "absolute_logit_delta": 11.824126243591309
+            },
+            {
+              "token_id": 1959,
+              "token": "\u0120\u00e2\u0122\u0136",
+              "teacher_rank": 9,
+              "student_rank": null,
+              "teacher_logit": 21.101852416992188,
+              "student_logit": 9.342779159545898,
+              "teacher_probability": 0.03487980738282204,
+              "student_probability": 0.0005271541303955019,
+              "logit_delta": -11.759073257446289,
+              "absolute_logit_delta": 11.759073257446289
+            },
+            {
+              "token_id": 4710,
+              "token": "\u0120\u010a\u010a",
+              "teacher_rank": 5,
+              "student_rank": null,
+              "teacher_logit": 21.436344146728516,
+              "student_logit": 11.090226173400879,
+              "teacher_probability": 0.0487351156771183,
+              "student_probability": 0.003025827929377556,
+              "logit_delta": -10.346117973327637,
+              "absolute_logit_delta": 10.346117973327637
+            },
+            {
+              "token_id": 320,
+              "token": "\u0120(",
+              "teacher_rank": 6,
+              "student_rank": null,
+              "teacher_logit": 21.217126846313477,
+              "student_logit": 10.918246269226074,
+              "teacher_probability": 0.039141472429037094,
+              "student_probability": 0.0025477351155132055,
+              "logit_delta": -10.298880577087402,
+              "absolute_logit_delta": 10.298880577087402
+            },
+            {
+              "token_id": 220,
+              "token": "\u0120",
+              "teacher_rank": 2,
+              "student_rank": null,
+              "teacher_logit": 22.27625846862793,
+              "student_logit": 12.879938125610352,
+              "teacher_probability": 0.11287873983383179,
+              "student_probability": 0.018117832019925117,
+              "logit_delta": -9.396320343017578,
+              "absolute_logit_delta": 9.396320343017578
+            },
+            {
+              "token_id": 1096,
+              "token": "\u0120This",
+              "teacher_rank": 1,
+              "student_rank": 3,
+              "teacher_logit": 22.8343505859375,
+              "student_logit": 14.390680313110352,
+              "teacher_probability": 0.1972370445728302,
+              "student_probability": 0.08207544684410095,
+              "logit_delta": -8.443670272827148,
+              "absolute_logit_delta": 8.443670272827148
+            },
+            {
+              "token_id": 358,
+              "token": "\u0120I",
+              "teacher_rank": 7,
+              "student_rank": 10,
+              "teacher_logit": 21.150150299072266,
+              "student_logit": 12.917407989501953,
+              "teacher_probability": 0.036605775356292725,
+              "student_probability": 0.01880958490073681,
+              "logit_delta": -8.232742309570312,
+              "absolute_logit_delta": 8.232742309570312
+            },
+            {
+              "token_id": 2055,
+              "token": "\u0120So",
+              "teacher_rank": 3,
+              "student_rank": 4,
+              "teacher_logit": 21.673179626464844,
+              "student_logit": 13.837133407592773,
+              "teacher_probability": 0.06175873056054115,
+              "student_probability": 0.0471857525408268,
+              "logit_delta": -7.83604621887207,
+              "absolute_logit_delta": 7.83604621887207
+            },
+            {
+              "token_id": 2938,
+              "token": "\u0120That",
+              "teacher_rank": null,
+              "student_rank": 9,
+              "teacher_logit": 20.607830047607422,
+              "student_logit": 12.94407844543457,
+              "teacher_probability": 0.021282514557242393,
+              "student_probability": 0.019317995756864548,
+              "logit_delta": -7.663751602172852,
+              "absolute_logit_delta": 7.663751602172852
+            },
+            {
+              "token_id": 3555,
+              "token": "\u0120What",
+              "teacher_rank": null,
+              "student_rank": 7,
+              "teacher_logit": 20.692455291748047,
+              "student_logit": 13.208806991577148,
+              "teacher_probability": 0.023161953315138817,
+              "student_probability": 0.02517283707857132,
+              "logit_delta": -7.483648300170898,
+              "absolute_logit_delta": 7.483648300170898
+            },
+            {
+              "token_id": 1084,
+              "token": "\u0120It",
+              "teacher_rank": null,
+              "student_rank": 5,
+              "teacher_logit": 20.362754821777344,
+              "student_logit": 13.82662582397461,
+              "teacher_probability": 0.01665666699409485,
+              "student_probability": 0.046692539006471634,
+              "logit_delta": -6.536128997802734,
+              "absolute_logit_delta": 6.536128997802734
+            },
+            {
+              "token_id": 576,
+              "token": "\u0120The",
+              "teacher_rank": 8,
+              "student_rank": 1,
+              "teacher_logit": 21.120403289794922,
+              "student_logit": 14.664002418518066,
+              "teacher_probability": 0.03553289920091629,
+              "student_probability": 0.10787368565797806,
+              "logit_delta": -6.4564008712768555,
+              "absolute_logit_delta": 6.4564008712768555
+            },
+            {
+              "token_id": 758,
+              "token": "\u0120In",
+              "teacher_rank": null,
+              "student_rank": 6,
+              "teacher_logit": 19.628583908081055,
+              "student_logit": 13.3612699508667,
+              "teacher_probability": 0.007993586361408234,
+              "student_probability": 0.029318787157535553,
+              "logit_delta": -6.2673139572143555,
+              "absolute_logit_delta": 6.2673139572143555
+            },
+            {
+              "token_id": 1988,
+              "token": "\u0120But",
+              "teacher_rank": null,
+              "student_rank": 2,
+              "teacher_logit": 19.79351234436035,
+              "student_logit": 14.632283210754395,
+              "teacher_probability": 0.009426907636225224,
+              "student_probability": 0.10450571030378342,
+              "logit_delta": -5.161229133605957,
+              "absolute_logit_delta": 5.161229133605957
+            },
+            {
+              "token_id": 4354,
+              "token": "\u0120However",
+              "teacher_rank": null,
+              "student_rank": 8,
+              "teacher_logit": 15.424552917480469,
+              "student_logit": 13.148605346679688,
+              "teacher_probability": 0.00011938623356400058,
+              "student_probability": 0.02370210736989975,
+              "logit_delta": -2.2759475708007812,
+              "absolute_logit_delta": 2.2759475708007812
+            }
+          ],
+          "kl_divergence": 1.2908374071121216,
+          "cosine_similarity": -0.022299930453300476,
+          "mean_absolute_logit_delta": 6.3562445640563965,
+          "max_absolute_logit_delta": 14.890684127807617
+        },
+        {
+          "step_index": 1,
+          "generated_token_id": 10865,
+          "generated_token": "\u0120broken",
+          "top_teacher_tokens": [
+            {
+              "rank": 1,
+              "token_id": 1156,
+              "token": "\u0120first",
+              "logit": 18.294363021850586,
+              "probability": 0.0626726821064949
+            },
+            {
+              "rank": 2,
+              "token_id": 1879,
+              "token": "\u0120world",
+              "logit": 17.660139083862305,
+              "probability": 0.03323826566338539
+            },
+            {
+              "rank": 3,
+              "token_id": 3364,
+              "token": "\u0120story",
+              "logit": 17.412212371826172,
+              "probability": 0.025939710438251495
+            },
+            {
+              "rank": 4,
+              "token_id": 32794,
+              "token": "\u0120poem",
+              "logit": 17.131376266479492,
+              "probability": 0.019588425755500793
+            },
+            {
+              "rank": 5,
+              "token_id": 3405,
+              "token": "\u0120question",
+              "logit": 17.12009620666504,
+              "probability": 0.01936870999634266
+            },
+            {
+              "rank": 6,
+              "token_id": 1555,
+              "token": "\u0120line",
+              "logit": 16.93346405029297,
+              "probability": 0.01607116498053074
+            },
+            {
+              "rank": 7,
+              "token_id": 17133,
+              "token": "\u0120phrase",
+              "logit": 16.927478790283203,
+              "probability": 0.015975261107087135
+            },
+            {
+              "rank": 8,
+              "token_id": 4024,
+              "token": "\u0120original",
+              "logit": 16.768402099609375,
+              "probability": 0.01362579595297575
+            },
+            {
+              "rank": 9,
+              "token_id": 12641,
+              "token": "\u0120quote",
+              "logit": 16.651460647583008,
+              "probability": 0.0121220164000988
+            },
+            {
+              "rank": 10,
+              "token_id": 1537,
+              "token": "\u0120last",
+              "logit": 16.629507064819336,
+              "probability": 0.011858793906867504
+            }
+          ],
+          "top_student_tokens": [
+            {
+              "rank": 1,
+              "token_id": 10865,
+              "token": "\u0120broken",
+              "logit": 13.622394561767578,
+              "probability": 0.035856813192367554
+            },
+            {
+              "rank": 2,
+              "token_id": 1879,
+              "token": "\u0120world",
+              "logit": 13.46823787689209,
+              "probability": 0.03073422610759735
+            },
+            {
+              "rank": 3,
+              "token_id": 1251,
+              "token": "\u0120people",
+              "logit": 13.146537780761719,
+              "probability": 0.02227971889078617
+            },
+            {
+              "rank": 4,
+              "token_id": 3364,
+              "token": "\u0120story",
+              "logit": 12.863621711730957,
+              "probability": 0.016789618879556656
+            },
+            {
+              "rank": 5,
+              "token_id": 2310,
+              "token": "\u0120old",
+              "logit": 12.686491966247559,
+              "probability": 0.014064177870750427
+            },
+            {
+              "rank": 6,
+              "token_id": 3746,
+              "token": "\u0120strong",
+              "logit": 12.083513259887695,
+              "probability": 0.007695627398788929
+            },
+            {
+              "rank": 7,
+              "token_id": 2874,
+              "token": "\u0120reason",
+              "logit": 12.047028541564941,
+              "probability": 0.007419914938509464
+            },
+            {
+              "rank": 8,
+              "token_id": 1156,
+              "token": "\u0120first",
+              "logit": 12.019845962524414,
+              "probability": 0.007220939267426729
+            },
+            {
+              "rank": 9,
+              "token_id": 3405,
+              "token": "\u0120question",
+              "logit": 11.948162078857422,
+              "probability": 0.00672143092378974
+            },
+            {
+              "rank": 10,
+              "token_id": 501,
+              "token": "\u0120new",
+              "logit": 11.927058219909668,
+              "probability": 0.006581069435924292
+            }
+          ],
+          "overlapping_top_k_tokens": {
+            "count": 4,
+            "tokens": [
+              {
+                "token_id": 1156,
+                "token": "\u0120first",
+                "teacher_rank": 1,
+                "student_rank": 8
+              },
+              {
+                "token_id": 1879,
+                "token": "\u0120world",
+                "teacher_rank": 2,
+                "student_rank": 2
+              },
+              {
+                "token_id": 3364,
+                "token": "\u0120story",
+                "teacher_rank": 3,
+                "student_rank": 4
+              },
+              {
+                "token_id": 3405,
+                "token": "\u0120question",
+                "teacher_rank": 5,
+                "student_rank": 9
+              }
+            ]
+          },
+          "ranked_logit_deltas": [
+            {
+              "token_id": 12641,
+              "token": "\u0120quote",
+              "teacher_rank": 9,
+              "student_rank": null,
+              "teacher_logit": 16.651460647583008,
+              "student_logit": 9.066978454589844,
+              "teacher_probability": 0.0121220164000988,
+              "student_probability": 0.00037685962161049247,
+              "logit_delta": -7.584482192993164,
+              "absolute_logit_delta": 7.584482192993164
+            },
+            {
+              "token_id": 1555,
+              "token": "\u0120line",
+              "teacher_rank": 6,
+              "student_rank": null,
+              "teacher_logit": 16.93346405029297,
+              "student_logit": 9.844084739685059,
+              "teacher_probability": 0.01607116498053074,
+              "student_probability": 0.0008197333081625402,
+              "logit_delta": -7.08937931060791,
+              "absolute_logit_delta": 7.08937931060791
+            },
+            {
+              "token_id": 4024,
+              "token": "\u0120original",
+              "teacher_rank": 8,
+              "student_rank": null,
+              "teacher_logit": 16.768402099609375,
+              "student_logit": 10.177945137023926,
+              "teacher_probability": 0.01362579595297575,
+              "student_probability": 0.001144633162766695,
+              "logit_delta": -6.590456962585449,
+              "absolute_logit_delta": 6.590456962585449
+            },
+            {
+              "token_id": 32794,
+              "token": "\u0120poem",
+              "teacher_rank": 4,
+              "student_rank": null,
+              "teacher_logit": 17.131376266479492,
+              "student_logit": 10.590171813964844,
+              "teacher_probability": 0.019588425755500793,
+              "student_probability": 0.0017285982612520456,
+              "logit_delta": -6.541204452514648,
+              "absolute_logit_delta": 6.541204452514648
+            },
+            {
+              "token_id": 1537,
+              "token": "\u0120last",
+              "teacher_rank": 10,
+              "student_rank": null,
+              "teacher_logit": 16.629507064819336,
+              "student_logit": 10.106498718261719,
+              "teacher_probability": 0.011858793906867504,
+              "student_probability": 0.0010657062521204352,
+              "logit_delta": -6.523008346557617,
+              "absolute_logit_delta": 6.523008346557617
+            },
+            {
+              "token_id": 1156,
+              "token": "\u0120first",
+              "teacher_rank": 1,
+              "student_rank": 8,
+              "teacher_logit": 18.294363021850586,
+              "student_logit": 12.019845962524414,
+              "teacher_probability": 0.0626726821064949,
+              "student_probability": 0.007220939267426729,
+              "logit_delta": -6.274517059326172,
+              "absolute_logit_delta": 6.274517059326172
+            },
+            {
+              "token_id": 17133,
+              "token": "\u0120phrase",
+              "teacher_rank": 7,
+              "student_rank": null,
+              "teacher_logit": 16.927478790283203,
+              "student_logit": 11.063383102416992,
+              "teacher_probability": 0.015975261107087135,
+              "student_probability": 0.002774643013253808,
+              "logit_delta": -5.864095687866211,
+              "absolute_logit_delta": 5.864095687866211
+            },
+            {
+              "token_id": 3405,
+              "token": "\u0120question",
+              "teacher_rank": 5,
+              "student_rank": 9,
+              "teacher_logit": 17.12009620666504,
+              "student_logit": 11.948162078857422,
+              "teacher_probability": 0.01936870999634266,
+              "student_probability": 0.00672143092378974,
+              "logit_delta": -5.171934127807617,
+              "absolute_logit_delta": 5.171934127807617
+            },
+            {
+              "token_id": 3364,
+              "token": "\u0120story",
+              "teacher_rank": 3,
+              "student_rank": 4,
+              "teacher_logit": 17.412212371826172,
+              "student_logit": 12.863621711730957,
+              "teacher_probability": 0.025939710438251495,
+              "student_probability": 0.016789618879556656,
+              "logit_delta": -4.548590660095215,
+              "absolute_logit_delta": 4.548590660095215
+            },
+            {
+              "token_id": 1879,
+              "token": "\u0120world",
+              "teacher_rank": 2,
+              "student_rank": 2,
+              "teacher_logit": 17.660139083862305,
+              "student_logit": 13.46823787689209,
+              "teacher_probability": 0.03323826566338539,
+              "student_probability": 0.03073422610759735,
+              "logit_delta": -4.191901206970215,
+              "absolute_logit_delta": 4.191901206970215
+            },
+            {
+              "token_id": 2874,
+              "token": "\u0120reason",
+              "teacher_rank": null,
+              "student_rank": 7,
+              "teacher_logit": 15.276703834533691,
+              "student_logit": 12.047028541564941,
+              "teacher_probability": 0.0030656710732728243,
+              "student_probability": 0.007419914938509464,
+              "logit_delta": -3.22967529296875,
+              "absolute_logit_delta": 3.22967529296875
+            },
+            {
+              "token_id": 501,
+              "token": "\u0120new",
+              "teacher_rank": null,
+              "student_rank": 10,
+              "teacher_logit": 15.072930335998535,
+              "student_logit": 11.927058219909668,
+              "teacher_probability": 0.0025005056522786617,
+              "student_probability": 0.006581069435924292,
+              "logit_delta": -3.145872116088867,
+              "absolute_logit_delta": 3.145872116088867
+            },
+            {
+              "token_id": 2310,
+              "token": "\u0120old",
+              "teacher_rank": null,
+              "student_rank": 5,
+              "teacher_logit": 15.226518630981445,
+              "student_logit": 12.686491966247559,
+              "teacher_probability": 0.0029156163800507784,
+              "student_probability": 0.014064177870750427,
+              "logit_delta": -2.5400266647338867,
+              "absolute_logit_delta": 2.5400266647338867
+            },
+            {
+              "token_id": 10865,
+              "token": "\u0120broken",
+              "teacher_rank": null,
+              "student_rank": 1,
+              "teacher_logit": 16.10806655883789,
+              "student_logit": 13.622394561767578,
+              "teacher_probability": 0.007040147669613361,
+              "student_probability": 0.035856813192367554,
+              "logit_delta": -2.4856719970703125,
+              "absolute_logit_delta": 2.4856719970703125
+            },
+            {
+              "token_id": 1251,
+              "token": "\u0120people",
+              "teacher_rank": null,
+              "student_rank": 3,
+              "teacher_logit": 14.719623565673828,
+              "student_logit": 13.146537780761719,
+              "teacher_probability": 0.0017562593566253781,
+              "student_probability": 0.02227971889078617,
+              "logit_delta": -1.5730857849121094,
+              "absolute_logit_delta": 1.5730857849121094
+            },
+            {
+              "token_id": 3746,
+              "token": "\u0120strong",
+              "teacher_rank": null,
+              "student_rank": 6,
+              "teacher_logit": 12.668183326721191,
+              "student_logit": 12.083513259887695,
+              "teacher_probability": 0.00022576648916583508,
+              "student_probability": 0.007695627398788929,
+              "logit_delta": -0.5846700668334961,
+              "absolute_logit_delta": 0.5846700668334961
+            }
+          ],
+          "kl_divergence": 0.8984134793281555,
+          "cosine_similarity": 0.5242305994033813,
+          "mean_absolute_logit_delta": 3.8853118419647217,
+          "max_absolute_logit_delta": 12.080915451049805
+        },
+        {
+          "step_index": 2,
+          "generated_token_id": 1879,
+          "generated_token": "\u0120world",
+          "top_teacher_tokens": [
+            {
+              "rank": 1,
+              "token_id": 7482,
+              "token": "\u0120places",
+              "logit": 22.970815658569336,
+              "probability": 0.8173623085021973
+            },
+            {
+              "rank": 2,
+              "token_id": 5479,
+              "token": "\u0120parts",
+              "logit": 20.14039421081543,
+              "probability": 0.04821455851197243
+            },
+            {
+              "rank": 3,
+              "token_id": 1992,
+              "token": "\u0120place",
+              "logit": 19.48451042175293,
+              "probability": 0.02502254582941532
+            },
+            {
+              "rank": 4,
+              "token_id": 2513,
+              "token": "\u0120things",
+              "logit": 19.11726188659668,
+              "probability": 0.017331553623080254
+            },
+            {
+              "rank": 5,
+              "token_id": 9666,
+              "token": "\u0120pieces",
+              "logit": 18.903039932250977,
+              "probability": 0.013989496044814587
+            },
+            {
+              "rank": 6,
+              "token_id": 525,
+              "token": "\u0120are",
+              "logit": 18.38842010498047,
+              "probability": 0.008361910469830036
+            },
+            {
+              "rank": 7,
+              "token_id": 2090,
+              "token": "ness",
+              "logit": 18.257530212402344,
+              "probability": 0.007336024194955826
+            },
+            {
+              "rank": 8,
+              "token_id": 1251,
+              "token": "\u0120people",
+              "logit": 18.183671951293945,
+              "probability": 0.006813723593950272
+            },
+            {
+              "rank": 9,
+              "token_id": 323,
+              "token": "\u0120and",
+              "logit": 18.077966690063477,
+              "probability": 0.006130237132310867
+            },
+            {
+              "rank": 10,
+              "token_id": 11,
+              "token": ",",
+              "logit": 17.625699996948242,
+              "probability": 0.00389996194280684
+            }
+          ],
+          "top_student_tokens": [
+            {
+              "rank": 1,
+              "token_id": 1879,
+              "token": "\u0120world",
+              "logit": 15.552148818969727,
+              "probability": 0.15696072578430176
+            },
+            {
+              "rank": 2,
+              "token_id": 7482,
+              "token": "\u0120places",
+              "logit": 15.115315437316895,
+              "probability": 0.10140904039144516
+            },
+            {
+              "rank": 3,
+              "token_id": 2513,
+              "token": "\u0120things",
+              "logit": 14.725921630859375,
+              "probability": 0.06870131939649582
+            },
+            {
+              "rank": 4,
+              "token_id": 6174,
+              "token": "\u0120ones",
+              "logit": 14.659337997436523,
+              "probability": 0.06427590548992157
+            },
+            {
+              "rank": 5,
+              "token_id": 1992,
+              "token": "\u0120place",
+              "logit": 14.604223251342773,
+              "probability": 0.06082920730113983
+            },
+            {
+              "rank": 6,
+              "token_id": 374,
+              "token": "\u0120is",
+              "logit": 14.277009010314941,
+              "probability": 0.04385355859994888
+            },
+            {
+              "rank": 7,
+              "token_id": 2090,
+              "token": "ness",
+              "logit": 13.671216011047363,
+              "probability": 0.02392832189798355
+            },
+            {
+              "rank": 8,
+              "token_id": 5479,
+              "token": "\u0120parts",
+              "logit": 13.631576538085938,
+              "probability": 0.022998370230197906
+            },
+            {
+              "rank": 9,
+              "token_id": 9666,
+              "token": "\u0120pieces",
+              "logit": 13.288299560546875,
+              "probability": 0.01631600223481655
+            },
+            {
+              "rank": 10,
+              "token_id": 1251,
+              "token": "\u0120people",
+              "logit": 13.25474739074707,
+              "probability": 0.015777647495269775
+            }
+          ],
+          "overlapping_top_k_tokens": {
+            "count": 7,
+            "tokens": [
+              {
+                "token_id": 7482,
+                "token": "\u0120places",
+                "teacher_rank": 1,
+                "student_rank": 2
+              },
+              {
+                "token_id": 5479,
+                "token": "\u0120parts",
+                "teacher_rank": 2,
+                "student_rank": 8
+              },
+              {
+                "token_id": 1992,
+                "token": "\u0120place",
+                "teacher_rank": 3,
                 "student_rank": 5
               },
               {
-                "token_id": 715,
-                "token": "\u0120\u010a",
-                "teacher_rank": 6,
+                "token_id": 2513,
+                "token": "\u0120things",
+                "teacher_rank": 4,
+                "student_rank": 3
+              },
+              {
+                "token_id": 9666,
+                "token": "\u0120pieces",
+                "teacher_rank": 5,
+                "student_rank": 9
+              },
+              {
+                "token_id": 2090,
+                "token": "ness",
+                "teacher_rank": 7,
                 "student_rank": 7
               },
               {
-                "token_id": 2303,
-                "token": "\u0120\u0120\u010a",
+                "token_id": 1251,
+                "token": "\u0120people",
                 "teacher_rank": 8,
                 "student_rank": 10
               }
@@ -206,208 +974,894 @@
           },
           "ranked_logit_deltas": [
             {
-              "token_id": 220,
-              "token": "\u0120",
+              "token_id": 7482,
+              "token": "\u0120places",
+              "teacher_rank": 1,
+              "student_rank": 2,
+              "teacher_logit": 22.970815658569336,
+              "student_logit": 15.115315437316895,
+              "teacher_probability": 0.8173623085021973,
+              "student_probability": 0.10140904039144516,
+              "logit_delta": -7.855500221252441,
+              "absolute_logit_delta": 7.855500221252441
+            },
+            {
+              "token_id": 525,
+              "token": "\u0120are",
+              "teacher_rank": 6,
+              "student_rank": null,
+              "teacher_logit": 18.38842010498047,
+              "student_logit": 10.63752555847168,
+              "teacher_probability": 0.008361910469830036,
+              "student_probability": 0.0011518534738570452,
+              "logit_delta": -7.750894546508789,
+              "absolute_logit_delta": 7.750894546508789
+            },
+            {
+              "token_id": 5479,
+              "token": "\u0120parts",
               "teacher_rank": 2,
-              "student_rank": null,
-              "teacher_logit": 24.1152286529541,
-              "student_logit": 13.637187957763672,
-              "teacher_probability": 0.15996146202087402,
-              "student_probability": 0.006740213837474585,
-              "logit_delta": -10.47804069519043,
-              "absolute_logit_delta": 10.47804069519043
+              "student_rank": 8,
+              "teacher_logit": 20.14039421081543,
+              "student_logit": 13.631576538085938,
+              "teacher_probability": 0.04821455851197243,
+              "student_probability": 0.022998370230197906,
+              "logit_delta": -6.508817672729492,
+              "absolute_logit_delta": 6.508817672729492
             },
             {
-              "token_id": 21806,
-              "token": "\u0120Answer",
-              "teacher_rank": 9,
-              "student_rank": null,
-              "teacher_logit": 20.251468658447266,
-              "student_logit": 10.362513542175293,
-              "teacher_probability": 0.003357420675456524,
-              "student_probability": 0.00025497679598629475,
-              "logit_delta": -9.888955116271973,
-              "absolute_logit_delta": 9.888955116271973
+              "token_id": 9666,
+              "token": "\u0120pieces",
+              "teacher_rank": 5,
+              "student_rank": 9,
+              "teacher_logit": 18.903039932250977,
+              "student_logit": 13.288299560546875,
+              "teacher_probability": 0.013989496044814587,
+              "student_probability": 0.01631600223481655,
+              "logit_delta": -5.614740371704102,
+              "absolute_logit_delta": 5.614740371704102
             },
             {
-              "token_id": 3197,
-              "token": "\u0120When",
+              "token_id": 11,
+              "token": ",",
               "teacher_rank": 10,
               "student_rank": null,
-              "teacher_logit": 20.239784240722656,
-              "student_logit": 11.292765617370605,
-              "teacher_probability": 0.003318419214338064,
-              "student_probability": 0.0006464039324782789,
-              "logit_delta": -8.94701862335205,
-              "absolute_logit_delta": 8.94701862335205
+              "teacher_logit": 17.625699996948242,
+              "student_logit": 12.473864555358887,
+              "teacher_probability": 0.00389996194280684,
+              "student_probability": 0.007226186338812113,
+              "logit_delta": -5.1518354415893555,
+              "absolute_logit_delta": 5.1518354415893555
             },
             {
-              "token_id": 2014,
-              "token": "\u0120To",
-              "teacher_rank": 5,
-              "student_rank": null,
-              "teacher_logit": 21.2533016204834,
-              "student_logit": 13.256940841674805,
-              "teacher_probability": 0.009143158793449402,
-              "student_probability": 0.004608233459293842,
-              "logit_delta": -7.996360778808594,
-              "absolute_logit_delta": 7.996360778808594
-            },
-            {
-              "token_id": 758,
-              "token": "\u0120In",
-              "teacher_rank": 7,
-              "student_rank": null,
-              "teacher_logit": 21.026947021484375,
-              "student_logit": 13.167511940002441,
-              "teacher_probability": 0.007291077636182308,
-              "student_probability": 0.004214013926684856,
-              "logit_delta": -7.859435081481934,
-              "absolute_logit_delta": 7.859435081481934
-            },
-            {
-              "token_id": 576,
-              "token": "\u0120The",
-              "teacher_rank": 1,
-              "student_rank": 1,
-              "teacher_logit": 25.52517318725586,
-              "student_logit": 17.927324295043945,
-              "teacher_probability": 0.6551586985588074,
-              "student_probability": 0.49187666177749634,
-              "logit_delta": -7.597848892211914,
-              "absolute_logit_delta": 7.597848892211914
-            },
-            {
-              "token_id": 1096,
-              "token": "\u0120This",
-              "teacher_rank": 4,
-              "student_rank": 5,
-              "teacher_logit": 22.228748321533203,
-              "student_logit": 14.655439376831055,
-              "teacher_probability": 0.024250874295830727,
-              "student_probability": 0.01865926943719387,
-              "logit_delta": -7.573308944702148,
-              "absolute_logit_delta": 7.573308944702148
-            },
-            {
-              "token_id": 715,
-              "token": "\u0120\u010a",
-              "teacher_rank": 6,
-              "student_rank": 7,
-              "teacher_logit": 21.180545806884766,
-              "student_logit": 14.557421684265137,
-              "teacher_probability": 0.008501564152538776,
-              "student_probability": 0.01691710762679577,
-              "logit_delta": -6.623124122619629,
-              "absolute_logit_delta": 6.623124122619629
-            },
-            {
-              "token_id": 2303,
-              "token": "\u0120\u0120\u010a",
+              "token_id": 1251,
+              "token": "\u0120people",
               "teacher_rank": 8,
               "student_rank": 10,
-              "teacher_logit": 20.649860382080078,
-              "student_logit": 14.133272171020508,
-              "teacher_probability": 0.005000634118914604,
-              "student_probability": 0.011069304309785366,
-              "logit_delta": -6.51658821105957,
-              "absolute_logit_delta": 6.51658821105957
+              "teacher_logit": 18.183671951293945,
+              "student_logit": 13.25474739074707,
+              "teacher_probability": 0.006813723593950272,
+              "student_probability": 0.015777647495269775,
+              "logit_delta": -4.928924560546875,
+              "absolute_logit_delta": 4.928924560546875
             },
             {
-              "token_id": 4710,
-              "token": "\u0120\u010a\u010a",
+              "token_id": 1992,
+              "token": "\u0120place",
               "teacher_rank": 3,
-              "student_rank": 2,
-              "teacher_logit": 22.364990234375,
-              "student_logit": 16.466083526611328,
-              "teacher_probability": 0.027790509164333344,
-              "student_probability": 0.1140899583697319,
-              "logit_delta": -5.898906707763672,
-              "absolute_logit_delta": 5.898906707763672
+              "student_rank": 5,
+              "teacher_logit": 19.48451042175293,
+              "student_logit": 14.604223251342773,
+              "teacher_probability": 0.02502254582941532,
+              "student_probability": 0.06082920730113983,
+              "logit_delta": -4.880287170410156,
+              "absolute_logit_delta": 4.880287170410156
             },
             {
-              "token_id": 481,
-              "token": "\u0120-",
-              "teacher_rank": null,
-              "student_rank": 9,
-              "teacher_logit": 19.710729598999023,
-              "student_logit": 14.155671119689941,
-              "teacher_probability": 0.0019550854340195656,
-              "student_probability": 0.011320043355226517,
-              "logit_delta": -5.555058479309082,
-              "absolute_logit_delta": 5.555058479309082
+              "token_id": 323,
+              "token": "\u0120and",
+              "teacher_rank": 9,
+              "student_rank": null,
+              "teacher_logit": 18.077966690063477,
+              "student_logit": 13.249024391174316,
+              "teacher_probability": 0.006130237132310867,
+              "student_probability": 0.0156876090914011,
+              "logit_delta": -4.82894229888916,
+              "absolute_logit_delta": 4.82894229888916
             },
             {
-              "token_id": 3555,
-              "token": "\u0120What",
-              "teacher_rank": null,
-              "student_rank": 6,
-              "teacher_logit": 19.46554183959961,
-              "student_logit": 14.566448211669922,
-              "teacher_probability": 0.0015299669466912746,
-              "student_probability": 0.017070502042770386,
-              "logit_delta": -4.8990936279296875,
-              "absolute_logit_delta": 4.8990936279296875
+              "token_id": 2090,
+              "token": "ness",
+              "teacher_rank": 7,
+              "student_rank": 7,
+              "teacher_logit": 18.257530212402344,
+              "student_logit": 13.671216011047363,
+              "teacher_probability": 0.007336024194955826,
+              "student_probability": 0.02392832189798355,
+              "logit_delta": -4.5863142013549805,
+              "absolute_logit_delta": 4.5863142013549805
             },
             {
-              "token_id": 5443,
-              "token": "\u0120Use",
-              "teacher_rank": null,
-              "student_rank": 8,
-              "teacher_logit": 18.754287719726562,
-              "student_logit": 14.185575485229492,
-              "teacher_probability": 0.000751256593503058,
-              "student_probability": 0.01166367344558239,
-              "logit_delta": -4.56871223449707,
-              "absolute_logit_delta": 4.56871223449707
+              "token_id": 2513,
+              "token": "\u0120things",
+              "teacher_rank": 4,
+              "student_rank": 3,
+              "teacher_logit": 19.11726188659668,
+              "student_logit": 14.725921630859375,
+              "teacher_probability": 0.017331553623080254,
+              "student_probability": 0.06870131939649582,
+              "logit_delta": -4.391340255737305,
+              "absolute_logit_delta": 4.391340255737305
             },
             {
-              "token_id": 330,
-              "token": "\u0120\"",
+              "token_id": 6174,
+              "token": "\u0120ones",
               "teacher_rank": null,
               "student_rank": 4,
-              "teacher_logit": 19.48044204711914,
-              "student_logit": 14.98935604095459,
-              "teacher_probability": 0.0015529344091191888,
-              "student_probability": 0.026056304574012756,
-              "logit_delta": -4.491086006164551,
-              "absolute_logit_delta": 4.491086006164551
+              "teacher_logit": 17.43347930908203,
+              "student_logit": 14.659337997436523,
+              "teacher_probability": 0.0032179548870772123,
+              "student_probability": 0.06427590548992157,
+              "logit_delta": -2.774141311645508,
+              "absolute_logit_delta": 2.774141311645508
             },
             {
-              "token_id": 7281,
-              "token": "\u0120Also",
+              "token_id": 374,
+              "token": "\u0120is",
               "teacher_rank": null,
-              "student_rank": 3,
-              "teacher_logit": 19.157695770263672,
-              "student_logit": 15.809579849243164,
-              "teacher_probability": 0.0011245692148804665,
-              "student_probability": 0.0591740757226944,
-              "logit_delta": -3.348115921020508,
-              "absolute_logit_delta": 3.348115921020508
+              "student_rank": 6,
+              "teacher_logit": 15.631343841552734,
+              "student_logit": 14.277009010314941,
+              "teacher_probability": 0.0005307897226884961,
+              "student_probability": 0.04385355859994888,
+              "logit_delta": -1.354334831237793,
+              "absolute_logit_delta": 1.354334831237793
+            },
+            {
+              "token_id": 1879,
+              "token": "\u0120world",
+              "teacher_rank": null,
+              "student_rank": 1,
+              "teacher_logit": 16.714019775390625,
+              "student_logit": 15.552148818969727,
+              "teacher_probability": 0.0015671936562284827,
+              "student_probability": 0.15696072578430176,
+              "logit_delta": -1.1618709564208984,
+              "absolute_logit_delta": 1.1618709564208984
             }
           ],
-          "kl_divergence": 0.6482594013214111,
-          "cosine_similarity": 0.1668778955936432,
-          "mean_absolute_logit_delta": 5.999454498291016,
-          "max_absolute_logit_delta": 15.702041625976562
+          "kl_divergence": 1.6175355911254883,
+          "cosine_similarity": 0.31469905376434326,
+          "mean_absolute_logit_delta": 3.60945200920105,
+          "max_absolute_logit_delta": 13.294670104980469
+        },
+        {
+          "step_index": 3,
+          "generated_token_id": 374,
+          "generated_token": "\u0120is",
+          "top_teacher_tokens": [
+            {
+              "rank": 1,
+              "token_id": 374,
+              "token": "\u0120is",
+              "logit": 22.797698974609375,
+              "probability": 0.5371246933937073
+            },
+            {
+              "rank": 2,
+              "token_id": 315,
+              "token": "\u0120of",
+              "logit": 20.825706481933594,
+              "probability": 0.07475661486387253
+            },
+            {
+              "rank": 3,
+              "token_id": 11,
+              "token": ",",
+              "logit": 20.64203643798828,
+              "probability": 0.062213234603405
+            },
+            {
+              "rank": 4,
+              "token_id": 702,
+              "token": "\u0120has",
+              "logit": 20.300569534301758,
+              "probability": 0.04421662166714668
+            },
+            {
+              "rank": 5,
+              "token_id": 572,
+              "token": "\u0120was",
+              "logit": 19.563608169555664,
+              "probability": 0.021160567179322243
+            },
+            {
+              "rank": 6,
+              "token_id": 304,
+              "token": "\u0120in",
+              "logit": 19.47696304321289,
+              "probability": 0.019404292106628418
+            },
+            {
+              "rank": 7,
+              "token_id": 323,
+              "token": "\u0120and",
+              "logit": 19.403076171875,
+              "probability": 0.018022257834672928
+            },
+            {
+              "rank": 8,
+              "token_id": 429,
+              "token": "\u0120that",
+              "logit": 18.707782745361328,
+              "probability": 0.008991808630526066
+            },
+            {
+              "rank": 9,
+              "token_id": 9044,
+              "token": "\u0120becomes",
+              "logit": 18.510116577148438,
+              "probability": 0.0073790717869997025
+            },
+            {
+              "rank": 10,
+              "token_id": 646,
+              "token": "\u0120can",
+              "logit": 18.25505256652832,
+              "probability": 0.005717798601835966
+            }
+          ],
+          "top_student_tokens": [
+            {
+              "rank": 1,
+              "token_id": 374,
+              "token": "\u0120is",
+              "logit": 16.727262496948242,
+              "probability": 0.3842754662036896
+            },
+            {
+              "rank": 2,
+              "token_id": 11,
+              "token": ",",
+              "logit": 15.098039627075195,
+              "probability": 0.07534945756196976
+            },
+            {
+              "rank": 3,
+              "token_id": 702,
+              "token": "\u0120has",
+              "logit": 14.80533218383789,
+              "probability": 0.05622881278395653
+            },
+            {
+              "rank": 4,
+              "token_id": 646,
+              "token": "\u0120can",
+              "logit": 14.211097717285156,
+              "probability": 0.031037461012601852
+            },
+            {
+              "rank": 5,
+              "token_id": 9044,
+              "token": "\u0120becomes",
+              "logit": 14.056886672973633,
+              "probability": 0.02660193294286728
+            },
+            {
+              "rank": 6,
+              "token_id": 686,
+              "token": "\u0120will",
+              "logit": 13.805610656738281,
+              "probability": 0.02069118618965149
+            },
+            {
+              "rank": 7,
+              "token_id": 1231,
+              "token": "\u0120may",
+              "logit": 13.530919075012207,
+              "probability": 0.015721295028924942
+            },
+            {
+              "rank": 8,
+              "token_id": 323,
+              "token": "\u0120and",
+              "logit": 13.456055641174316,
+              "probability": 0.014587321318686008
+            },
+            {
+              "rank": 9,
+              "token_id": 3880,
+              "token": "\u0120needs",
+              "logit": 13.154777526855469,
+              "probability": 0.010792750865221024
+            },
+            {
+              "rank": 10,
+              "token_id": 572,
+              "token": "\u0120was",
+              "logit": 12.897542953491211,
+              "probability": 0.00834481231868267
+            }
+          ],
+          "overlapping_top_k_tokens": {
+            "count": 7,
+            "tokens": [
+              {
+                "token_id": 374,
+                "token": "\u0120is",
+                "teacher_rank": 1,
+                "student_rank": 1
+              },
+              {
+                "token_id": 11,
+                "token": ",",
+                "teacher_rank": 3,
+                "student_rank": 2
+              },
+              {
+                "token_id": 702,
+                "token": "\u0120has",
+                "teacher_rank": 4,
+                "student_rank": 3
+              },
+              {
+                "token_id": 572,
+                "token": "\u0120was",
+                "teacher_rank": 5,
+                "student_rank": 10
+              },
+              {
+                "token_id": 323,
+                "token": "\u0120and",
+                "teacher_rank": 7,
+                "student_rank": 8
+              },
+              {
+                "token_id": 9044,
+                "token": "\u0120becomes",
+                "teacher_rank": 9,
+                "student_rank": 5
+              },
+              {
+                "token_id": 646,
+                "token": "\u0120can",
+                "teacher_rank": 10,
+                "student_rank": 4
+              }
+            ]
+          },
+          "ranked_logit_deltas": [
+            {
+              "token_id": 315,
+              "token": "\u0120of",
+              "teacher_rank": 2,
+              "student_rank": null,
+              "teacher_logit": 20.825706481933594,
+              "student_logit": 12.698135375976562,
+              "teacher_probability": 0.07475661486387253,
+              "student_probability": 0.006836203392595053,
+              "logit_delta": -8.127571105957031,
+              "absolute_logit_delta": 8.127571105957031
+            },
+            {
+              "token_id": 429,
+              "token": "\u0120that",
+              "teacher_rank": 8,
+              "student_rank": null,
+              "teacher_logit": 18.707782745361328,
+              "student_logit": 10.98164176940918,
+              "teacher_probability": 0.008991808630526066,
+              "student_probability": 0.0012284324038773775,
+              "logit_delta": -7.726140975952148,
+              "absolute_logit_delta": 7.726140975952148
+            },
+            {
+              "token_id": 304,
+              "token": "\u0120in",
+              "teacher_rank": 6,
+              "student_rank": null,
+              "teacher_logit": 19.47696304321289,
+              "student_logit": 12.166139602661133,
+              "teacher_probability": 0.019404292106628418,
+              "student_probability": 0.004015801008790731,
+              "logit_delta": -7.310823440551758,
+              "absolute_logit_delta": 7.310823440551758
+            },
+            {
+              "token_id": 572,
+              "token": "\u0120was",
+              "teacher_rank": 5,
+              "student_rank": 10,
+              "teacher_logit": 19.563608169555664,
+              "student_logit": 12.897542953491211,
+              "teacher_probability": 0.021160567179322243,
+              "student_probability": 0.00834481231868267,
+              "logit_delta": -6.666065216064453,
+              "absolute_logit_delta": 6.666065216064453
+            },
+            {
+              "token_id": 374,
+              "token": "\u0120is",
+              "teacher_rank": 1,
+              "student_rank": 1,
+              "teacher_logit": 22.797698974609375,
+              "student_logit": 16.727262496948242,
+              "teacher_probability": 0.5371246933937073,
+              "student_probability": 0.3842754662036896,
+              "logit_delta": -6.070436477661133,
+              "absolute_logit_delta": 6.070436477661133
+            },
+            {
+              "token_id": 323,
+              "token": "\u0120and",
+              "teacher_rank": 7,
+              "student_rank": 8,
+              "teacher_logit": 19.403076171875,
+              "student_logit": 13.456055641174316,
+              "teacher_probability": 0.018022257834672928,
+              "student_probability": 0.014587321318686008,
+              "logit_delta": -5.947020530700684,
+              "absolute_logit_delta": 5.947020530700684
+            },
+            {
+              "token_id": 11,
+              "token": ",",
+              "teacher_rank": 3,
+              "student_rank": 2,
+              "teacher_logit": 20.64203643798828,
+              "student_logit": 15.098039627075195,
+              "teacher_probability": 0.062213234603405,
+              "student_probability": 0.07534945756196976,
+              "logit_delta": -5.543996810913086,
+              "absolute_logit_delta": 5.543996810913086
+            },
+            {
+              "token_id": 702,
+              "token": "\u0120has",
+              "teacher_rank": 4,
+              "student_rank": 3,
+              "teacher_logit": 20.300569534301758,
+              "student_logit": 14.80533218383789,
+              "teacher_probability": 0.04421662166714668,
+              "student_probability": 0.05622881278395653,
+              "logit_delta": -5.495237350463867,
+              "absolute_logit_delta": 5.495237350463867
+            },
+            {
+              "token_id": 1231,
+              "token": "\u0120may",
+              "teacher_rank": null,
+              "student_rank": 7,
+              "teacher_logit": 18.100873947143555,
+              "student_logit": 13.530919075012207,
+              "teacher_probability": 0.004900833126157522,
+              "student_probability": 0.015721295028924942,
+              "logit_delta": -4.569954872131348,
+              "absolute_logit_delta": 4.569954872131348
+            },
+            {
+              "token_id": 9044,
+              "token": "\u0120becomes",
+              "teacher_rank": 9,
+              "student_rank": 5,
+              "teacher_logit": 18.510116577148438,
+              "student_logit": 14.056886672973633,
+              "teacher_probability": 0.0073790717869997025,
+              "student_probability": 0.02660193294286728,
+              "logit_delta": -4.453229904174805,
+              "absolute_logit_delta": 4.453229904174805
+            },
+            {
+              "token_id": 646,
+              "token": "\u0120can",
+              "teacher_rank": 10,
+              "student_rank": 4,
+              "teacher_logit": 18.25505256652832,
+              "student_logit": 14.211097717285156,
+              "teacher_probability": 0.005717798601835966,
+              "student_probability": 0.031037461012601852,
+              "logit_delta": -4.043954849243164,
+              "absolute_logit_delta": 4.043954849243164
+            },
+            {
+              "token_id": 686,
+              "token": "\u0120will",
+              "teacher_rank": null,
+              "student_rank": 6,
+              "teacher_logit": 17.471954345703125,
+              "student_logit": 13.805610656738281,
+              "teacher_probability": 0.0026129651814699173,
+              "student_probability": 0.02069118618965149,
+              "logit_delta": -3.6663436889648438,
+              "absolute_logit_delta": 3.6663436889648438
+            },
+            {
+              "token_id": 3880,
+              "token": "\u0120needs",
+              "teacher_rank": null,
+              "student_rank": 9,
+              "teacher_logit": 16.584720611572266,
+              "student_logit": 13.154777526855469,
+              "teacher_probability": 0.001076001557521522,
+              "student_probability": 0.010792750865221024,
+              "logit_delta": -3.429943084716797,
+              "absolute_logit_delta": 3.429943084716797
+            }
+          ],
+          "kl_divergence": 0.42408493161201477,
+          "cosine_similarity": -0.01324412226676941,
+          "mean_absolute_logit_delta": 5.988554000854492,
+          "max_absolute_logit_delta": 14.15768814086914
+        },
+        {
+          "step_index": 4,
+          "generated_token_id": 537,
+          "generated_token": "\u0120not",
+          "top_teacher_tokens": [
+            {
+              "rank": 1,
+              "token_id": 264,
+              "token": "\u0120a",
+              "logit": 20.893569946289062,
+              "probability": 0.21975229680538177
+            },
+            {
+              "rank": 2,
+              "token_id": 279,
+              "token": "\u0120the",
+              "logit": 20.317686080932617,
+              "probability": 0.12354644387960434
+            },
+            {
+              "rank": 3,
+              "token_id": 537,
+              "token": "\u0120not",
+              "logit": 20.221603393554688,
+              "probability": 0.11222821474075317
+            },
+            {
+              "rank": 4,
+              "token_id": 2480,
+              "token": "\u0120full",
+              "logit": 19.61432647705078,
+              "probability": 0.06114557385444641
+            },
+            {
+              "rank": 5,
+              "token_id": 1380,
+              "token": "\u0120where",
+              "logit": 19.290668487548828,
+              "probability": 0.044238679111003876
+            },
+            {
+              "rank": 6,
+              "token_id": 1083,
+              "token": "\u0120also",
+              "logit": 18.9482421875,
+              "probability": 0.03141147643327713
+            },
+            {
+              "rank": 7,
+              "token_id": 10199,
+              "token": "\u0120filled",
+              "logit": 18.802770614624023,
+              "probability": 0.027158815413713455
+            },
+            {
+              "rank": 8,
+              "token_id": 1431,
+              "token": "\u0120now",
+              "logit": 18.36372947692871,
+              "probability": 0.017508044838905334
+            },
+            {
+              "rank": 9,
+              "token_id": 1075,
+              "token": "\u0120like",
+              "logit": 18.352970123291016,
+              "probability": 0.017320681363344193
+            },
+            {
+              "rank": 10,
+              "token_id": 304,
+              "token": "\u0120in",
+              "logit": 18.329538345336914,
+              "probability": 0.016919543966650963
+            }
+          ],
+          "top_student_tokens": [
+            {
+              "rank": 1,
+              "token_id": 537,
+              "token": "\u0120not",
+              "logit": 15.94241714477539,
+              "probability": 0.1709451675415039
+            },
+            {
+              "rank": 2,
+              "token_id": 264,
+              "token": "\u0120a",
+              "logit": 15.327676773071289,
+              "probability": 0.09244394302368164
+            },
+            {
+              "rank": 3,
+              "token_id": 279,
+              "token": "\u0120the",
+              "logit": 14.95374870300293,
+              "probability": 0.06360387802124023
+            },
+            {
+              "rank": 4,
+              "token_id": 1083,
+              "token": "\u0120also",
+              "logit": 14.20021915435791,
+              "probability": 0.029938487336039543
+            },
+            {
+              "rank": 5,
+              "token_id": 10199,
+              "token": "\u0120filled",
+              "logit": 14.067418098449707,
+              "probability": 0.026215316727757454
+            },
+            {
+              "rank": 6,
+              "token_id": 10865,
+              "token": "\u0120broken",
+              "logit": 14.017252922058105,
+              "probability": 0.024932662025094032
+            },
+            {
+              "rank": 7,
+              "token_id": 1431,
+              "token": "\u0120now",
+              "logit": 13.682265281677246,
+              "probability": 0.017835501581430435
+            },
+            {
+              "rank": 8,
+              "token_id": 304,
+              "token": "\u0120in",
+              "logit": 13.501012802124023,
+              "probability": 0.014878815971314907
+            },
+            {
+              "rank": 9,
+              "token_id": 825,
+              "token": "\u0120one",
+              "logit": 13.431230545043945,
+              "probability": 0.013875938020646572
+            },
+            {
+              "rank": 10,
+              "token_id": 1380,
+              "token": "\u0120where",
+              "logit": 13.376901626586914,
+              "probability": 0.013142185285687447
+            }
+          ],
+          "overlapping_top_k_tokens": {
+            "count": 8,
+            "tokens": [
+              {
+                "token_id": 264,
+                "token": "\u0120a",
+                "teacher_rank": 1,
+                "student_rank": 2
+              },
+              {
+                "token_id": 279,
+                "token": "\u0120the",
+                "teacher_rank": 2,
+                "student_rank": 3
+              },
+              {
+                "token_id": 537,
+                "token": "\u0120not",
+                "teacher_rank": 3,
+                "student_rank": 1
+              },
+              {
+                "token_id": 1380,
+                "token": "\u0120where",
+                "teacher_rank": 5,
+                "student_rank": 10
+              },
+              {
+                "token_id": 1083,
+                "token": "\u0120also",
+                "teacher_rank": 6,
+                "student_rank": 4
+              },
+              {
+                "token_id": 10199,
+                "token": "\u0120filled",
+                "teacher_rank": 7,
+                "student_rank": 5
+              },
+              {
+                "token_id": 1431,
+                "token": "\u0120now",
+                "teacher_rank": 8,
+                "student_rank": 7
+              },
+              {
+                "token_id": 304,
+                "token": "\u0120in",
+                "teacher_rank": 10,
+                "student_rank": 8
+              }
+            ]
+          },
+          "ranked_logit_deltas": [
+            {
+              "token_id": 2480,
+              "token": "\u0120full",
+              "teacher_rank": 4,
+              "student_rank": null,
+              "teacher_logit": 19.61432647705078,
+              "student_logit": 12.994994163513184,
+              "teacher_probability": 0.06114557385444641,
+              "student_probability": 0.008970306254923344,
+              "logit_delta": -6.619332313537598,
+              "absolute_logit_delta": 6.619332313537598
+            },
+            {
+              "token_id": 1380,
+              "token": "\u0120where",
+              "teacher_rank": 5,
+              "student_rank": 10,
+              "teacher_logit": 19.290668487548828,
+              "student_logit": 13.376901626586914,
+              "teacher_probability": 0.044238679111003876,
+              "student_probability": 0.013142185285687447,
+              "logit_delta": -5.913766860961914,
+              "absolute_logit_delta": 5.913766860961914
+            },
+            {
+              "token_id": 264,
+              "token": "\u0120a",
+              "teacher_rank": 1,
+              "student_rank": 2,
+              "teacher_logit": 20.893569946289062,
+              "student_logit": 15.327676773071289,
+              "teacher_probability": 0.21975229680538177,
+              "student_probability": 0.09244394302368164,
+              "logit_delta": -5.565893173217773,
+              "absolute_logit_delta": 5.565893173217773
+            },
+            {
+              "token_id": 279,
+              "token": "\u0120the",
+              "teacher_rank": 2,
+              "student_rank": 3,
+              "teacher_logit": 20.317686080932617,
+              "student_logit": 14.95374870300293,
+              "teacher_probability": 0.12354644387960434,
+              "student_probability": 0.06360387802124023,
+              "logit_delta": -5.3639373779296875,
+              "absolute_logit_delta": 5.3639373779296875
+            },
+            {
+              "token_id": 1075,
+              "token": "\u0120like",
+              "teacher_rank": 9,
+              "student_rank": null,
+              "teacher_logit": 18.352970123291016,
+              "student_logit": 13.072671890258789,
+              "teacher_probability": 0.017320681363344193,
+              "student_probability": 0.009694877080619335,
+              "logit_delta": -5.280298233032227,
+              "absolute_logit_delta": 5.280298233032227
+            },
+            {
+              "token_id": 304,
+              "token": "\u0120in",
+              "teacher_rank": 10,
+              "student_rank": 8,
+              "teacher_logit": 18.329538345336914,
+              "student_logit": 13.501012802124023,
+              "teacher_probability": 0.016919543966650963,
+              "student_probability": 0.014878815971314907,
+              "logit_delta": -4.828525543212891,
+              "absolute_logit_delta": 4.828525543212891
+            },
+            {
+              "token_id": 1083,
+              "token": "\u0120also",
+              "teacher_rank": 6,
+              "student_rank": 4,
+              "teacher_logit": 18.9482421875,
+              "student_logit": 14.20021915435791,
+              "teacher_probability": 0.03141147643327713,
+              "student_probability": 0.029938487336039543,
+              "logit_delta": -4.74802303314209,
+              "absolute_logit_delta": 4.74802303314209
+            },
+            {
+              "token_id": 10199,
+              "token": "\u0120filled",
+              "teacher_rank": 7,
+              "student_rank": 5,
+              "teacher_logit": 18.802770614624023,
+              "student_logit": 14.067418098449707,
+              "teacher_probability": 0.027158815413713455,
+              "student_probability": 0.026215316727757454,
+              "logit_delta": -4.735352516174316,
+              "absolute_logit_delta": 4.735352516174316
+            },
+            {
+              "token_id": 1431,
+              "token": "\u0120now",
+              "teacher_rank": 8,
+              "student_rank": 7,
+              "teacher_logit": 18.36372947692871,
+              "student_logit": 13.682265281677246,
+              "teacher_probability": 0.017508044838905334,
+              "student_probability": 0.017835501581430435,
+              "logit_delta": -4.681464195251465,
+              "absolute_logit_delta": 4.681464195251465
+            },
+            {
+              "token_id": 825,
+              "token": "\u0120one",
+              "teacher_rank": null,
+              "student_rank": 9,
+              "teacher_logit": 18.024425506591797,
+              "student_logit": 13.431230545043945,
+              "teacher_probability": 0.012470383197069168,
+              "student_probability": 0.013875938020646572,
+              "logit_delta": -4.593194961547852,
+              "absolute_logit_delta": 4.593194961547852
+            },
+            {
+              "token_id": 537,
+              "token": "\u0120not",
+              "teacher_rank": 3,
+              "student_rank": 1,
+              "teacher_logit": 20.221603393554688,
+              "student_logit": 15.94241714477539,
+              "teacher_probability": 0.11222821474075317,
+              "student_probability": 0.1709451675415039,
+              "logit_delta": -4.279186248779297,
+              "absolute_logit_delta": 4.279186248779297
+            },
+            {
+              "token_id": 10865,
+              "token": "\u0120broken",
+              "teacher_rank": null,
+              "student_rank": 6,
+              "teacher_logit": 17.603403091430664,
+              "student_logit": 14.017252922058105,
+              "teacher_probability": 0.008185253478586674,
+              "student_probability": 0.024932662025094032,
+              "logit_delta": -3.5861501693725586,
+              "absolute_logit_delta": 3.5861501693725586
+            }
+          ],
+          "kl_divergence": 0.39780306816101074,
+          "cosine_similarity": 0.041959941387176514,
+          "mean_absolute_logit_delta": 5.335522174835205,
+          "max_absolute_logit_delta": 13.758502960205078
         }
       ],
-      "prompt_length": 12,
-      "steps_count": 1,
-      "kl_divergence": 0.6482594013214111,
-      "cosine_similarity": 0.1668778955936432,
-      "mean_absolute_logit_delta": 5.999454498291016,
-      "max_absolute_logit_delta": 15.702041625976562,
-      "mean_overlapping_top_k_count": 5.0
+      "prompt_length": 16,
+      "steps_count": 5,
+      "kl_divergence": 0.9257348954677582,
+      "cosine_similarity": 0.16906910836696626,
+      "mean_absolute_logit_delta": 5.035016918182373,
+      "max_absolute_logit_delta": 13.636492156982422,
+      "mean_overlapping_top_k_count": 6.0
     }
   ],
   "aggregate": {
     "prompt_count": 1,
-    "generated_step_count": 1,
-    "mean_kl_divergence": 0.6482594013214111,
-    "mean_cosine_similarity": 0.1668778955936432,
-    "mean_absolute_logit_delta": 5.999454498291016,
-    "mean_max_absolute_logit_delta": 15.702041625976562,
-    "mean_overlapping_top_k_count": 5.0
+    "generated_step_count": 5,
+    "mean_kl_divergence": 0.9257348954677582,
+    "mean_cosine_similarity": 0.16906910836696626,
+    "mean_absolute_logit_delta": 5.035016918182373,
+    "mean_max_absolute_logit_delta": 13.636492156982422,
+    "mean_overlapping_top_k_count": 6.0
   }
 }

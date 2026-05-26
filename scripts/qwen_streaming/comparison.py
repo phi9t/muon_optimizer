@@ -18,7 +18,7 @@ from .streamer import QwenLayerStreamer
 from .weights import SafetensorWeightLoader
 
 DEFAULT_PROMPTS: List[str] = [
-    "Summarize the goal of this system in one sentence.",
+    "The world breaks everyone, and afterward, many are strong at the broken places.",
     "What is 7 + 5?",
     "Write a tiny poem about a cat.",
     "Explain why gradients matter in optimization.",

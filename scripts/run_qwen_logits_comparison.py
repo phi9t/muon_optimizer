@@ -20,7 +20,7 @@ OUTPUT_DEFAULT = REPO_ROOT / "explorer" / "public" / "data" / "qwen_logits.json"
 DEFAULT_STUDENT_MODEL = "Qwen/Qwen3-0.6B"
 DEFAULT_TEACHER_MODEL = "Qwen/Qwen3-1.7B"
 DEFAULT_PROMPTS: List[str] = [
-    "Summarize the goal of this system in one sentence.",
+    "The world breaks everyone, and afterward, many are strong at the broken places.",
     "What is 7 + 5?",
     "Write a tiny poem about a cat.",
     "Explain why gradients matter in optimization.",

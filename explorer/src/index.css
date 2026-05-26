@@ -2451,7 +2451,7 @@ button.codelist-tag {
 .qwen-metric-card {
   background: rgba(255, 255, 255, 0.01);
   border: 1px solid var(--border-color);
-  border-radius: 10px;
+  border-radius: 8px;
   padding: 12px 14px;
   display: flex;
   flex-direction: column;
@@ -2497,8 +2497,8 @@ button.codelist-tag {
 
 .qwen-heatmap-row {
   display: grid;
-  grid-template-columns: 92px repeat(var(--qwen-token-count, 10), minmax(74px, 1fr));
-  gap: 6px;
+  grid-template-columns: 96px repeat(var(--qwen-token-count, 10), minmax(92px, 1fr));
+  gap: 8px;
   min-width: max-content;
   align-items: stretch;
 }
@@ -2520,18 +2520,15 @@ button.codelist-tag {
   font-family: var(--font-mono);
   font-size: 11px;
   line-height: 1.25;
-  min-height: 32px;
+  min-height: 48px;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
-  overflow: hidden;
-  text-overflow: ellipsis;
   text-align: center;
-  word-break: break-word;
 }
 
 .qwen-heatmap-cell {
-  min-height: 44px;
+  min-height: 48px;
   border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: 8px;
   display: flex;
@@ -2541,6 +2538,68 @@ button.codelist-tag {
   font-size: 12px;
   color: var(--text-primary);
   background: rgba(255, 255, 255, 0.03);
+}
+
+.qwen-subword-pieces {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  min-width: 0;
+  max-width: 100%;
+  vertical-align: middle;
+}
+
+.qwen-subword-pieces.compact {
+  justify-content: center;
+  gap: 3px;
+}
+
+.qwen-subword-piece {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  padding: 2px 5px;
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.04);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.qwen-subword-pieces.compact .qwen-subword-piece {
+  padding: 2px 4px;
+  font-size: 10.5px;
+}
+
+.qwen-subword-piece.space {
+  border-color: rgba(14, 165, 233, 0.38);
+  color: #bae6fd;
+  background: rgba(14, 165, 233, 0.16);
+}
+
+.qwen-subword-piece.newline,
+.qwen-subword-piece.tab {
+  border-color: rgba(245, 158, 11, 0.38);
+  color: #fde68a;
+  background: rgba(245, 158, 11, 0.16);
+}
+
+.qwen-subword-piece.control {
+  border-color: rgba(148, 163, 184, 0.28);
+  color: var(--text-muted);
+  background: rgba(148, 163, 184, 0.1);
+}
+
+.qwen-step-token {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
 }
 
 .qwen-heatmap-cell.teacher {
@@ -2567,10 +2626,7 @@ button.codelist-tag {
 }
 
 .qwen-token {
-  max-width: 220px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  max-width: 260px;
   font-family: var(--font-mono);
 }
 
@@ -2580,7 +2636,7 @@ button.codelist-tag {
   }
 
   .qwen-heatmap-row {
-    grid-template-columns: 82px repeat(var(--qwen-token-count, 10), minmax(66px, 1fr));
+    grid-template-columns: 82px repeat(var(--qwen-token-count, 10), minmax(84px, 1fr));
   }
 
   .qwen-topline {

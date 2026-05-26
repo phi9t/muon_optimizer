@@ -35,14 +35,148 @@ interface RankedBarData extends TokenRankedRow {
   label_rank: number
 }
 
+type TokenPieceKind = 'space' | 'newline' | 'tab' | 'text' | 'control'
+
+interface TokenPiece {
+  kind: TokenPieceKind
+  label: string
+}
+
+let byteLevelDecoder: Map<string, number> | null = null
+const utf8Decoder = new TextDecoder('utf-8', { fatal: false })
+
 function formatPercent(value: number | null): string {
   if (value == null || !Number.isFinite(value)) return '--'
   return `${(value * 100).toFixed(2)}%`
 }
 
+function getByteLevelDecoder(): Map<string, number> {
+  if (byteLevelDecoder) return byteLevelDecoder
+
+  const bytes: number[] = []
+  for (let value = 33; value <= 126; value += 1) bytes.push(value)
+  for (let value = 161; value <= 172; value += 1) bytes.push(value)
+  for (let value = 174; value <= 255; value += 1) bytes.push(value)
+
+  const byteSet = new Set(bytes)
+  const codePoints = [...bytes]
+  let offset = 0
+  for (let value = 0; value <= 255; value += 1) {
+    if (!byteSet.has(value)) {
+      bytes.push(value)
+      codePoints.push(256 + offset)
+      offset += 1
+    }
+  }
+
+  byteLevelDecoder = new Map(
+    bytes.map((byte, index) => [String.fromCodePoint(codePoints[index]), byte]),
+  )
+  return byteLevelDecoder
+}
+
+function decodeByteLevelSegment(segment: string): string {
+  const decoder = getByteLevelDecoder()
+  const output: string[] = []
+  let bytes: number[] = []
+
+  const flushBytes = () => {
+    if (!bytes.length) return
+    output.push(utf8Decoder.decode(new Uint8Array(bytes)))
+    bytes = []
+  }
+
+  for (const char of segment) {
+    const byte = decoder.get(char)
+    if (byte == null) {
+      flushBytes()
+      output.push(char)
+    } else {
+      bytes.push(byte)
+    }
+  }
+
+  flushBytes()
+  return output.join('')
+}
+
+function decodeTokenString(token: string): string {
+  let text = ''
+  let segment = ''
+
+  const flushSegment = () => {
+    if (!segment) return
+    text += decodeByteLevelSegment(segment)
+    segment = ''
+  }
+
+  for (const char of token) {
+    if (char === 'Ġ' || char === '▁') {
+      flushSegment()
+      text += ' '
+    } else if (char === 'Ċ' || char === '\n' || char === '\r') {
+      flushSegment()
+      text += '\\n'
+    } else if (char === 'ĉ' || char === '\t') {
+      flushSegment()
+      text += '\\t'
+    } else {
+      segment += char
+    }
+  }
+
+  flushSegment()
+  return text
+}
+
 function normalizeToken(token: string): string {
-  const safe = token?.replace(/\r?\n/g, '\\n').trim() || '[empty token]'
+  const safe = decodeTokenString(token).trim() || '[empty token]'
   return safe.length > 22 ? `${safe.slice(0, 19)}...` : safe
+}
+
+function tokenToPieces(token: string): TokenPiece[] {
+  if (!token) return [{ kind: 'control', label: 'empty' }]
+
+  const pieces: TokenPiece[] = []
+  let text = ''
+
+  const flushText = () => {
+    if (!text) return
+    pieces.push({ kind: 'text', label: decodeByteLevelSegment(text) })
+    text = ''
+  }
+
+  for (const char of token) {
+    if (char === 'Ġ' || char === '▁') {
+      flushText()
+      pieces.push({ kind: 'space', label: 'space' })
+    } else if (char === 'Ċ' || char === '\n' || char === '\r') {
+      flushText()
+      pieces.push({ kind: 'newline', label: 'newline' })
+    } else if (char === 'ĉ' || char === '\t') {
+      flushText()
+      pieces.push({ kind: 'tab', label: 'tab' })
+    } else {
+      text += char
+    }
+  }
+
+  flushText()
+  return pieces.length ? pieces : [{ kind: 'control', label: 'empty' }]
+}
+
+function TokenPieces({ token, compact = false }: { token: string; compact?: boolean }) {
+  const pieces = tokenToPieces(token)
+
+  return (
+    <span className={`qwen-subword-pieces${compact ? ' compact' : ''}`} aria-label={token}>
+      {pieces.map((piece, index) => (
+        <span key={`${piece.kind}-${piece.label}-${index}`} className={`qwen-subword-piece ${piece.kind}`}>
+          {piece.label}
+        </span>
+      ))}
+    </span>
+  )
 }
 
 function buildProbabilityMap(tokens: QwenTopToken[] | undefined) {
@@ -397,7 +531,10 @@ export default function QwenLogitsExplorer() {
             <article className="qwen-metric-card">
               <h3>Selected step token</h3>
               <p className="qwen-metric-value">
-                {`#${selectedStep.step_index + 1} ${selectedStep.generated_token}`}
+                <span className="qwen-step-token">
+                  <span>{`#${selectedStep.step_index + 1}`}</span>
+                  <TokenPieces token={selectedStep.generated_token} />
+                </span>
               </p>
             </article>
           )}
@@ -424,7 +561,7 @@ export default function QwenLogitsExplorer() {
                   role="columnheader"
                   title={row.token}
                 >
-                  {row.token_label}
+                  <TokenPieces token={row.token} compact />
                 </div>
               ))}
             </div>
@@ -537,7 +674,9 @@ export default function QwenLogitsExplorer() {
               <tbody>
                 {promptDeltaRows.map((row, rowIndex) => (
                   <tr key={`${row.token_id}-${rowIndex}`}>
-                    <td className="qwen-token">{row.token}</td>
+                    <td className="qwen-token" title={row.token}>
+                      <TokenPieces token={row.token} />
+                    </td>
                     <td>{row.teacher_rank ?? '--'}</td>
                     <td>{row.student_rank ?? '--'}</td>
                     <td>

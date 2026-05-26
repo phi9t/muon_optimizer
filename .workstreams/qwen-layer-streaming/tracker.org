@@ -1,0 +1,63 @@
+#+title: Qwen3 Layer-Streaming Workstream
+#+startup: overview
+
+* Task Description
+Build a constrained-memory Qwen3 execution path for the existing logits explorer workflow.
+
+The current script can compare Qwen3 student and teacher logits by loading each full model on CPU. On this 8 GiB MacBook Air, that full-load approach risks excessive memory use. The new path should keep peak RSS under a 6 GiB cap by streaming model execution layer by layer from Hugging Face safetensors and dropping weights as soon as each stage completes.
+
+The student model is =Qwen/Qwen3-0.6B=. The teacher model is =Qwen/Qwen3-1.7B=. The student should generate tokens greedily, and the teacher should process the same generated prefixes to produce comparable logits. Both models need per-layer KV cache, stored locally on disk and loaded only as each layer needs it.
+
+Initial scope may be Qwen3-family-specific. It does not need to be a general Hugging Face execution engine.
+
+* Implementation Prompt
+Implement the design in =.workstreams/qwen-layer-streaming/design.md=.
+
+Add a constrained runner path that:
+
+- uses CPU only,
+- defaults to a 6 GiB RSS memory cap,
+- streams Qwen3 weights one stage at a time from safetensors,
+- spills per-layer KV cache to local disk,
+- lets the 0.6B student greedily generate a short continuation,
+- runs the 1.7B teacher on the same generated token positions,
+- compares next-token logits at each generated step,
+- writes explorer-consumable JSON with prompt-level and step-level metrics,
+- keeps the existing full-model comparison path available.
+
+Prefer using Hugging Face Qwen3 module classes one layer at a time. If that cannot stay under the memory cap, implement only the Qwen3 operations needed for these checkpoints.
+
+* Acceptance Criteria
+** Required
+- [ ] The constrained runner is CPU-only.
+- [ ] Default memory cap is 6 GiB RSS and is configurable.
+- [ ] The runner checks RSS at meaningful stage boundaries and fails clearly if the cap is exceeded.
+- [ ] Student and teacher tokenizer ID mappings are validated before logits are compared.
+- [ ] Student and teacher vocab sizes are validated before logits are compared.
+- [ ] Required Qwen3 safetensors keys are validated before long execution begins.
+- [ ] At most one model stage's weights are intentionally resident at a time.
+- [ ] KV cache is spilled per model and per layer to local disk.
+- [ ] Student generation is deterministic by default, using greedy decoding.
+- [ ] Teacher logits are computed for the same generated token positions as the student.
+- [ ] Output JSON includes metadata, prompt-level summaries, generation steps, top-k token payloads, overlap, KL divergence, cosine similarity, mean absolute logit delta, and max absolute logit delta.
+- [ ] Existing explorer UI can show missing-data empty state without breaking.
+- [ ] Existing full-model comparison path remains available unless deliberately replaced by an equivalent CLI mode.
+
+** Verification
+- [ ] =python3 scripts/run_qwen_logits_comparison.py --help= succeeds or the new constrained command's =--help= succeeds.
+- [ ] A dry-plan or metadata validation mode succeeds without loading full model weights.
+- [ ] Unit tests cover safetensors index parsing, tensor key planning, tokenizer compatibility, memory guard behavior, KV spill round trip, and JSON shape.
+- [ ] =npm --prefix explorer run build= succeeds after any explorer schema/UI changes.
+- [ ] A minimal runtime smoke test with one prompt and one generated token is attempted on this machine, unless explicitly skipped because model download/runtime is too expensive.
+
+** Non-Goals
+- [ ] Do not build a fully general transformer execution engine.
+- [ ] Do not optimize for speed before memory containment.
+- [ ] Do not require GPU, MPS, or CUDA.
+- [ ] Do not commit downloaded model weights or generated Hugging Face cache files.
+
+* Notes
+- Physical memory on this machine is 8 GiB.
+- The cap was chosen as 6 GiB to leave headroom for macOS and shell/browser activity.
+- KV cache stores attention keys and values, not hidden states.
+- Full constrained execution can be slow; implementation should support small smoke runs first.

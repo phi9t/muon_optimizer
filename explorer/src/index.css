@@ -2483,6 +2483,84 @@ button.codelist-tag {
   align-items: start;
 }
 
+.qwen-heatmap-panel {
+  grid-column: 1 / -1;
+}
+
+.qwen-token-heatmap {
+  margin-top: 12px;
+  overflow-x: auto;
+  display: grid;
+  gap: 6px;
+  padding-bottom: 4px;
+}
+
+.qwen-heatmap-row {
+  display: grid;
+  grid-template-columns: 92px repeat(var(--qwen-token-count, 10), minmax(74px, 1fr));
+  gap: 6px;
+  min-width: max-content;
+  align-items: stretch;
+}
+
+.qwen-heatmap-header {
+  align-items: end;
+}
+
+.qwen-heatmap-label {
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+}
+
+.qwen-heatmap-token {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.25;
+  min-height: 32px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+  word-break: break-word;
+}
+
+.qwen-heatmap-cell {
+  min-height: 44px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.qwen-heatmap-cell.teacher {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(99, 102, 241, calc(0.18 + var(--heat) * 0.72)),
+      rgba(79, 70, 229, calc(0.12 + var(--heat) * 0.5))
+    );
+}
+
+.qwen-heatmap-cell.student {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(16, 185, 129, calc(0.16 + var(--heat) * 0.68)),
+      rgba(5, 150, 105, calc(0.1 + var(--heat) * 0.48))
+    );
+}
+
 .qwen-chart-wrap {
   min-height: 280px;
   margin-top: 12px;
@@ -2499,6 +2577,10 @@ button.codelist-tag {
 @media (max-width: 1024px) {
   .qwen-inspector-grid {
     grid-template-columns: 1fr;
+  }
+
+  .qwen-heatmap-row {
+    grid-template-columns: 82px repeat(var(--qwen-token-count, 10), minmax(66px, 1fr));
   }
 
   .qwen-topline {

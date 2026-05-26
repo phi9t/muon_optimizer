@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import type { CSSProperties } from 'react'
 import {
   Bar,
   BarChart,
@@ -78,6 +79,11 @@ function deltaToRow(delta: QwenRankedLogitDelta, labelRank: number): RankedBarDa
 function formatCell(value: number | null): string {
   if (value == null || !Number.isFinite(value)) return '--'
   return formatMetric(value)
+}
+
+function heatIntensity(value: number | null, maxValue: number): number {
+  if (value == null || !Number.isFinite(value) || maxValue <= 0) return 0
+  return Math.max(0.08, Math.min(1, value / maxValue))
 }
 
 function isMissingDataError(message: string): boolean {
@@ -250,6 +256,11 @@ export default function QwenLogitsExplorer() {
     ?? selectedPrompt?.overlapping_top_k_tokens?.count
     ?? 0
   const selectedPromptGeneratedText = hasStepOutput ? (selectedPrompt?.generated_text ?? '') : ''
+  const heatmapMaxProbability = useMemo(() => {
+    return tokenRows.reduce((maxValue, row) => {
+      return Math.max(maxValue, row.teacher_probability ?? 0, row.student_probability ?? 0)
+    }, 0)
+  }, [tokenRows])
 
   if (loading) {
     return (
@@ -394,6 +405,60 @@ export default function QwenLogitsExplorer() {
       </section>
 
       <div className="qwen-inspector-grid">
+        <section className="card-view qwen-heatmap-panel">
+          <h3>Student/teacher token heatmap</h3>
+          <p className="text-muted">
+            Relative probability intensity across the selected {hasStepOutput ? 'generation step' : 'prompt'} tokens.
+          </p>
+          <div className="qwen-token-heatmap" role="table" aria-label="Student and teacher token probability heatmap">
+            <div
+              className="qwen-heatmap-row qwen-heatmap-header"
+              role="row"
+              style={{ '--qwen-token-count': tokenRows.length } as CSSProperties & Record<'--qwen-token-count', number>}
+            >
+              <div className="qwen-heatmap-label" role="columnheader">Model</div>
+              {tokenRows.map((row, index) => (
+                <div
+                  key={`${row.token_id}-${index}-head`}
+                  className="qwen-heatmap-token"
+                  role="columnheader"
+                  title={row.token}
+                >
+                  {row.token_label}
+                </div>
+              ))}
+            </div>
+            {[
+              { label: 'Teacher', key: 'teacher_probability' as const, className: 'teacher' },
+              { label: 'Student', key: 'student_probability' as const, className: 'student' },
+            ].map((model) => (
+              <div
+                key={model.label}
+                className="qwen-heatmap-row"
+                role="row"
+                style={{ '--qwen-token-count': tokenRows.length } as CSSProperties & Record<'--qwen-token-count', number>}
+              >
+                <div className="qwen-heatmap-label" role="rowheader">{model.label}</div>
+                {tokenRows.map((row, index) => {
+                  const probability = row[model.key]
+                  const intensity = heatIntensity(probability, heatmapMaxProbability)
+                  return (
+                    <div
+                      key={`${row.token_id}-${index}-${model.label}`}
+                      className={`qwen-heatmap-cell ${model.className}`}
+                      role="cell"
+                      style={{ '--heat': intensity } as CSSProperties & Record<'--heat', number>}
+                      title={`${model.label} ${row.token}: ${formatPercent(probability)}`}
+                    >
+                      {formatPercent(probability)}
+                    </div>
+                  )
+                })}
+              </div>
+            ))}
+          </div>
+        </section>
+
         <section className="card-view">
           <h3>Top-token probabilities</h3>
           <p className="text-muted">

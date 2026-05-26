@@ -76,6 +76,10 @@ def _reshape_qkv(
     return tensor.reshape(batch_size, seq_len, num_heads, head_dim)
 
 
+def _attention_width(spec: QwenStreamedModelSpec) -> int:
+    return int(spec.num_attention_heads * spec.head_dim)
+
+
 @dataclass
 class QwenLayerStreamer:
     """Stream one Qwen model one layer at a time from safetensor weights."""
@@ -127,7 +131,7 @@ class QwenLayerStreamer:
 
             q, k = apply_rope(q, k, positions, self.spec.rope_theta)
             attention = causal_attention(q, k, v)
-            attention = attention.reshape(batch_size, seq_len, self.spec.hidden_size)
+            attention = attention.reshape(batch_size, seq_len, _attention_width(self.spec))
             attention = F.linear(
                 attention,
                 layer_tensors[_layer_name(layer_index, "self_attn.o_proj.weight")],
@@ -221,7 +225,7 @@ class QwenLayerStreamer:
             v = torch.cat([existing.value, v_new.to(torch.float32)], dim=1)
             attention = causal_attention(q, k, v)
 
-            attention = attention.reshape(1, 1, self.spec.hidden_size)
+            attention = attention.reshape(1, 1, _attention_width(self.spec))
             attention = F.linear(
                 attention,
                 layer_tensors[_layer_name(layer_index, "self_attn.o_proj.weight")],

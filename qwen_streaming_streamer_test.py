@@ -22,7 +22,7 @@ _QWEN_TEST_CONFIG = {
     "vocab_size": 13,
     "num_attention_heads": 2,
     "num_key_value_heads": 1,
-    "head_dim": 2,
+    "head_dim": 4,
     "intermediate_size": 4,
     "rms_norm_eps": 1e-6,
     "rope_theta": 10000.0,
@@ -47,15 +47,16 @@ def _build_checkpoint_tensors(config: dict[str, object], tie_word_embeddings: bo
 
     for layer_index in range(num_layers):
         prefix = f"model.layers.{layer_index}."
+        attention_width = int(config["num_attention_heads"]) * int(config["head_dim"])
         tensors[prefix + "input_layernorm.weight"] = torch.randn(hidden_size, dtype=torch.float32)
         tensors[prefix + "post_attention_layernorm.weight"] = torch.randn(hidden_size, dtype=torch.float32)
         kv_width = int(config["num_key_value_heads"]) * int(config["head_dim"])
-        tensors[prefix + "self_attn.q_proj.weight"] = torch.randn(hidden_size, hidden_size, dtype=torch.float32)
+        tensors[prefix + "self_attn.q_proj.weight"] = torch.randn(attention_width, hidden_size, dtype=torch.float32)
         tensors[prefix + "self_attn.q_norm.weight"] = torch.randn(int(config["head_dim"]), dtype=torch.float32)
         tensors[prefix + "self_attn.k_proj.weight"] = torch.randn(kv_width, hidden_size, dtype=torch.float32)
         tensors[prefix + "self_attn.k_norm.weight"] = torch.randn(int(config["head_dim"]), dtype=torch.float32)
         tensors[prefix + "self_attn.v_proj.weight"] = torch.randn(kv_width, hidden_size, dtype=torch.float32)
-        tensors[prefix + "self_attn.o_proj.weight"] = torch.randn(hidden_size, hidden_size, dtype=torch.float32)
+        tensors[prefix + "self_attn.o_proj.weight"] = torch.randn(hidden_size, attention_width, dtype=torch.float32)
         tensors[prefix + "mlp.gate_proj.weight"] = torch.randn(intermediate_size, hidden_size, dtype=torch.float32)
         tensors[prefix + "mlp.up_proj.weight"] = torch.randn(intermediate_size, hidden_size, dtype=torch.float32)
         tensors[prefix + "mlp.down_proj.weight"] = torch.randn(hidden_size, intermediate_size, dtype=torch.float32)

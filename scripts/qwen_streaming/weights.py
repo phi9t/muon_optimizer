@@ -1,24 +1,30 @@
-"""Weight loading helpers for the streamed Qwen path (Task 1 scaffold)."""
+"""Weight loading helpers for streaming Qwen checkpoints."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, Iterable, Mapping
+from pathlib import Path
+from typing import Dict, Iterable, Mapping
+
+import torch
+from safetensors import safe_open
 
 
 @dataclass
 class SafetensorWeightLoader:
-    """Placeholder loader class for Task 1.
+    """Load tensors from safetensors shards without reading full checkpoints."""
 
-    The implementation is intentionally minimal and non-functional; later tasks
-    will replace this with checkpoint-aware loading logic.
-    """
+    weight_map: Mapping[str, Path]
+    dtype: torch.dtype
 
-    manifest: Mapping[str, Any] | None = None
+    def load_tensor(self, name: str) -> torch.Tensor:
+        if name not in self.weight_map:
+            raise KeyError(f"Tensor {name!r} is not present in weight map.")
 
-    def load_tensor(self, name: str) -> object:
-        raise NotImplementedError("streamed Qwen loading is not implemented yet")
+        path = Path(self.weight_map[name])
+        with safe_open(path, framework="pt", device="cpu") as f:
+            tensor = f.get_tensor(name)
+        return tensor.to(device="cpu", dtype=self.dtype)
 
-    def load_tensors(self, names: Iterable[str]) -> Dict[str, object]:
-        raise NotImplementedError("streamed Qwen loading is not implemented yet")
-
+    def load_tensors(self, names: Iterable[str]) -> Dict[str, torch.Tensor]:
+        return {name: self.load_tensor(name) for name in names}

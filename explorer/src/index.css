@@ -2391,6 +2391,15 @@ button.codelist-tag {
   flex-wrap: wrap;
 }
 
+.qwen-controls {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  min-width: 280px;
+  width: min(100%, 560px);
+  flex-wrap: wrap;
+}
+
 .qwen-title-block {
   display: flex;
   flex-direction: column;
@@ -2494,6 +2503,11 @@ button.codelist-tag {
 
   .qwen-topline {
     align-items: stretch;
+  }
+
+  .qwen-controls {
+    width: 100%;
+    flex-wrap: wrap;
   }
 
   .qwen-prompt-control {

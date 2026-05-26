@@ -13,9 +13,10 @@ export interface QwenOverlappingToken {
   student_rank: number
 }
 
-export interface QwenPromptResult {
-  prompt_index: number
-  prompt: string
+export interface QwenStreamStep {
+  step_index: number
+  generated_token_id: number
+  generated_token: string
   top_teacher_tokens: QwenTopToken[]
   top_student_tokens: QwenTopToken[]
   overlapping_top_k_tokens: {
@@ -23,6 +24,28 @@ export interface QwenPromptResult {
     tokens: QwenOverlappingToken[]
   }
   ranked_logit_deltas: QwenRankedLogitDelta[]
+  kl_divergence: number
+  cosine_similarity: number
+  mean_absolute_logit_delta: number
+  max_absolute_logit_delta: number
+}
+
+export interface QwenPromptResult {
+  prompt_index: number
+  prompt: string
+  generated_token_ids?: number[]
+  generated_text?: string
+  steps?: QwenStreamStep[]
+  prompt_length?: number
+  steps_count?: number
+  mean_overlapping_top_k_count?: number
+  top_teacher_tokens?: QwenTopToken[]
+  top_student_tokens?: QwenTopToken[]
+  overlapping_top_k_tokens?: {
+    count: number
+    tokens: QwenOverlappingToken[]
+  }
+  ranked_logit_deltas?: QwenRankedLogitDelta[]
   kl_divergence: number
   cosine_similarity: number
   mean_absolute_logit_delta: number
@@ -60,6 +83,9 @@ export interface QwenMetadata {
   dtype: string
   top_k: number
   prompt_count: number
+  mode?: 'full' | 'streamed'
+  max_new_tokens?: number
+  memory_cap_gb?: number
 }
 
 export interface QwenLogitsPayload {

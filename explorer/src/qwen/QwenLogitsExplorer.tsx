@@ -10,7 +10,13 @@ import {
   YAxis,
 } from 'recharts'
 import { errorMessage, fetchExplorerJson, formatMetric } from '../lib/fetch'
-import type { QwenLogitsPayload, QwenPromptResult, QwenRankedLogitDelta, QwenTopToken } from './types'
+import type {
+  QwenLogitsPayload,
+  QwenPromptResult,
+  QwenRankedLogitDelta,
+  QwenStreamStep,
+  QwenTopToken,
+} from './types'
 
 interface TokenRankedRow {
   token_id: number
@@ -81,6 +87,7 @@ function isMissingDataError(message: string): boolean {
 export default function QwenLogitsExplorer() {
   const [payload, setPayload] = useState<QwenLogitsPayload | null>(null)
   const [selectedPromptIndex, setSelectedPromptIndex] = useState(0)
+  const [selectedStepIndex, setSelectedStepIndex] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [missingData, setMissingData] = useState(false)
@@ -110,6 +117,21 @@ export default function QwenLogitsExplorer() {
     void load()
   }, [])
 
+  const selectedPrompt: QwenPromptResult | null = useMemo(() => {
+    if (!payload) return null
+    return payload.prompts[selectedPromptIndex] ?? payload.prompts[0] ?? null
+  }, [payload, selectedPromptIndex])
+
+  const selectedStep: QwenStreamStep | null = useMemo(() => {
+    if (!selectedPrompt?.steps?.length) return null
+
+    if (selectedStepIndex < selectedPrompt.steps.length) {
+      return selectedPrompt.steps[selectedStepIndex] ?? null
+    }
+
+    return selectedPrompt.steps[selectedPrompt.steps.length - 1] ?? null
+  }, [selectedPrompt, selectedStepIndex])
+
   useEffect(() => {
     if (!payload) return
     if (selectedPromptIndex >= payload.prompts.length) {
@@ -117,10 +139,16 @@ export default function QwenLogitsExplorer() {
     }
   }, [payload, selectedPromptIndex])
 
-  const selectedPrompt: QwenPromptResult | null = useMemo(() => {
-    if (!payload) return null
-    return payload.prompts[selectedPromptIndex] ?? payload.prompts[0] ?? null
-  }, [payload, selectedPromptIndex])
+  useEffect(() => {
+    if (!selectedPrompt) return
+    if (!selectedPrompt.steps?.length) {
+      setSelectedStepIndex(0)
+      return
+    }
+    if (selectedStepIndex >= selectedPrompt.steps.length) {
+      setSelectedStepIndex(0)
+    }
+  }, [selectedPrompt, selectedStepIndex])
 
   const promptRows = useMemo(() => {
     if (!payload?.prompts.length) return []
@@ -131,11 +159,26 @@ export default function QwenLogitsExplorer() {
     }))
   }, [payload?.prompts])
 
+  const stepRows = useMemo(() => {
+    if (!selectedPrompt?.steps?.length) return []
+    return selectedPrompt.steps.map((step) => ({
+      index: step.step_index,
+      token: step.generated_token,
+      tokenId: step.generated_token_id,
+    }))
+  }, [selectedPrompt?.steps])
+
   const tokenRows = useMemo<RankedBarData[]>(() => {
     if (!selectedPrompt) return []
+    const source = selectedStep ?? {
+      top_teacher_tokens: selectedPrompt.top_teacher_tokens,
+      top_student_tokens: selectedPrompt.top_student_tokens,
+      ranked_logit_deltas: selectedPrompt.ranked_logit_deltas,
+      // Full-prompt output always has these fields; default fallback is harmless.
+    }
 
-    if (selectedPrompt.ranked_logit_deltas?.length) {
-      return selectedPrompt.ranked_logit_deltas
+    if (source.ranked_logit_deltas?.length) {
+      return source.ranked_logit_deltas
         .map((delta) =>
           deltaToRow(
             delta,
@@ -149,8 +192,8 @@ export default function QwenLogitsExplorer() {
     }
 
     const topK = payload?.metadata.top_k ?? 10
-    const teacher = buildProbabilityMap(selectedPrompt.top_teacher_tokens)
-    const student = buildProbabilityMap(selectedPrompt.top_student_tokens)
+    const teacher = buildProbabilityMap(source.top_teacher_tokens)
+    const student = buildProbabilityMap(source.top_student_tokens)
 
     const tokenIds = new Set([...teacher.keys(), ...student.keys()])
     const rows = [...tokenIds].map((tokenId) => {
@@ -189,18 +232,24 @@ export default function QwenLogitsExplorer() {
     return rows.sort((a, b) => a.label_rank - b.label_rank)
   }, [selectedPrompt, payload?.metadata.top_k])
 
-  const deltaRows = useMemo(
+  const promptDeltaRows = useMemo(
     () => {
-      if (selectedPrompt?.ranked_logit_deltas?.length) {
-        return selectedPrompt.ranked_logit_deltas.map((delta, index) => deltaToRow(delta, index + 1))
+      const source = selectedStep ?? selectedPrompt
+      if (!source?.ranked_logit_deltas?.length) {
+        return tokenRows.slice().sort((a, b) => b.abs_delta_logit - a.abs_delta_logit)
       }
-      return tokenRows.slice().sort((a, b) => b.abs_delta_logit - a.abs_delta_logit)
+      return source.ranked_logit_deltas.map((delta, index) => deltaToRow(delta, index + 1))
     },
-    [selectedPrompt?.ranked_logit_deltas, tokenRows],
+    [selectedPrompt?.ranked_logit_deltas, selectedStep, tokenRows],
   )
 
   const topK = payload?.metadata.top_k ?? 0
   const aggregate = payload?.aggregate
+  const hasStepOutput = Boolean(selectedPrompt?.steps?.length)
+  const selectedPromptOverlapCount = selectedPrompt?.mean_overlapping_top_k_count
+    ?? selectedPrompt?.overlapping_top_k_tokens?.count
+    ?? 0
+  const selectedPromptGeneratedText = hasStepOutput ? (selectedPrompt?.generated_text ?? '') : ''
 
   if (loading) {
     return (
@@ -257,29 +306,53 @@ export default function QwenLogitsExplorer() {
               Student: {payload.metadata.student_model}
               {' | '}
               Top-k: {topK}
+              {' | '}
+              Mode: {payload.metadata.mode ?? 'full'}
             </p>
           </div>
-          <div className="qwen-prompt-control">
-            <label className="qwen-prompt-label" htmlFor="qwen-prompt-select">
-              Prompt
-            </label>
-            <select
-              id="qwen-prompt-select"
-              className="qwen-prompt-select"
-              value={selectedPromptIndex}
-              onChange={(event) => setSelectedPromptIndex(Number(event.target.value))}
-            >
-              {promptRows.map((entry) => (
-                <option key={entry.index} value={entry.index}>
-                  {`${entry.promptIndex + 1}: ${entry.prompt.slice(0, 80)}`}
-                  {entry.prompt.length > 80 ? '...' : ''}
-                </option>
-              ))}
-            </select>
+          <div className="qwen-controls">
+            <div className="qwen-prompt-control">
+              <label className="qwen-prompt-label" htmlFor="qwen-prompt-select">
+                Prompt
+              </label>
+              <select
+                id="qwen-prompt-select"
+                className="qwen-prompt-select"
+                value={selectedPromptIndex}
+                onChange={(event) => setSelectedPromptIndex(Number(event.target.value))}
+              >
+                {promptRows.map((entry) => (
+                  <option key={entry.index} value={entry.index}>
+                    {`${entry.promptIndex + 1}: ${entry.prompt.slice(0, 80)}`}
+                    {entry.prompt.length > 80 ? '...' : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {hasStepOutput && (
+              <div className="qwen-prompt-control">
+                <label className="qwen-prompt-label" htmlFor="qwen-step-select">
+                  Step
+                </label>
+                <select
+                  id="qwen-step-select"
+                  className="qwen-prompt-select"
+                  value={selectedStepIndex}
+                  onChange={(event) => setSelectedStepIndex(Number(event.target.value))}
+                >
+                  {stepRows.map((entry) => (
+                    <option key={entry.index} value={entry.index}>
+                      {`Step ${entry.index + 1}: ${entry.token} (${entry.tokenId})`}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
         </div>
 
         <p className="text-secondary">{selectedPrompt.prompt}</p>
+        {hasStepOutput && <p className="text-secondary">Generated: {selectedPromptGeneratedText}</p>}
 
         <div className="qwen-metric-grid">
           <article className="qwen-metric-card">
@@ -303,13 +376,20 @@ export default function QwenLogitsExplorer() {
           <article className="qwen-metric-card">
             <h3>Average top-k overlap</h3>
             <p className="qwen-metric-value">
-              {aggregate && topK > 0
-                ? `${formatMetric(aggregate.mean_overlapping_top_k_count)} / ${topK} (${formatMetric(
-                    (aggregate.mean_overlapping_top_k_count / topK) * 100,
-                  )}%)`
-                : '--'}
+              {selectedPrompt ? formatMetric(selectedPromptOverlapCount) : '--'}
+              {topK > 0
+                ? ` / ${topK} (${formatMetric((selectedPromptOverlapCount / topK) * 100)}%)`
+                : ''}
             </p>
           </article>
+          {selectedStep && (
+            <article className="qwen-metric-card">
+              <h3>Selected step token</h3>
+              <p className="qwen-metric-value">
+                {`#${selectedStep.step_index + 1} ${selectedStep.generated_token}`}
+              </p>
+            </article>
+          )}
         </div>
       </section>
 
@@ -317,7 +397,8 @@ export default function QwenLogitsExplorer() {
         <section className="card-view">
           <h3>Top-token probabilities</h3>
           <p className="text-muted">
-            Teacher and student probabilities for the selected prompt top tokens.
+            Teacher and student probabilities for the selected {hasStepOutput ? 'step' : 'prompt'} top
+            tokens.
           </p>
           <div className="qwen-chart-wrap">
             <ResponsiveContainer width="100%" height={Math.max(260, tokenRows.length * 24)}>
@@ -389,13 +470,17 @@ export default function QwenLogitsExplorer() {
                 </tr>
               </thead>
               <tbody>
-                {deltaRows.map((row, rowIndex) => (
+                {promptDeltaRows.map((row, rowIndex) => (
                   <tr key={`${row.token_id}-${rowIndex}`}>
                     <td className="qwen-token">{row.token}</td>
                     <td>{row.teacher_rank ?? '--'}</td>
                     <td>{row.student_rank ?? '--'}</td>
-                    <td>{row.teacher_probability == null ? '--' : formatPercent(row.teacher_probability)}</td>
-                    <td>{row.student_probability == null ? '--' : formatPercent(row.student_probability)}</td>
+                    <td>
+                      {row.teacher_probability == null ? '--' : formatPercent(row.teacher_probability)}
+                    </td>
+                    <td>
+                      {row.student_probability == null ? '--' : formatPercent(row.student_probability)}
+                    </td>
                     <td>{formatCell(row.delta_logit)}</td>
                     <td>{formatMetric(row.abs_delta_logit)}</td>
                   </tr>

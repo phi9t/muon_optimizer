@@ -110,7 +110,8 @@ def _run_streamed(args: argparse.Namespace) -> None:
 
     from qwen_streaming.comparison import run_streamed_comparison
 
-    run_streamed_comparison(args)
+    prompts = _validate_prompt_count(DEFAULT_PROMPTS, args.limit_prompts)
+    run_streamed_comparison(args, prompts=prompts)
 
 
 def _load_transformers() -> Tuple[Any, Any]:
@@ -472,6 +473,8 @@ def _run(args: argparse.Namespace) -> None:
 
     if args.top_k <= 0:
         raise ValueError("--top-k must be a positive integer.")
+    if args.limit_prompts <= 0:
+        raise ValueError("--limit-prompts must be a positive integer.")
 
     prompts = _validate_prompt_count(DEFAULT_PROMPTS, args.limit_prompts)
 

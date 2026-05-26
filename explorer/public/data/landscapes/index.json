@@ -1,0 +1,23 @@
+{
+  "profile": "lite",
+  "problems": [
+    {
+      "id": "quadratic",
+      "name": "Quadratic",
+      "description": "2D benchmark on the Quadratic loss landscape.",
+      "steps": 25
+    },
+    {
+      "id": "rosenbrock",
+      "name": "Rosenbrock",
+      "description": "2D benchmark on the Rosenbrock loss landscape.",
+      "steps": 25
+    },
+    {
+      "id": "ill_conditioned",
+      "name": "Ill-Conditioned (\u03ba=1000)",
+      "description": "2D benchmark on the Ill-Conditioned (\u03ba=1000) loss landscape.",
+      "steps": 25
+    }
+  ]
+}

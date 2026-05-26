@@ -135,6 +135,24 @@ jobs:
         mnist_optimizer_benchmark.main()
         " || echo "MNIST benchmark test completed"
 
+  explorer:
+    name: Build Explorer UI
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        cache: npm
+        cache-dependency-path: explorer/package-lock.json
+
+    - name: Build explorer (GitHub Pages base)
+      working-directory: explorer
+      run: npm ci && npm run build:pages
+
   build:
     name: Build and Install Package
     runs-on: ubuntu-latest

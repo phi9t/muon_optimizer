@@ -29,7 +29,8 @@ Note: The project uses a 120-character line length limit with E501 (line too lon
 
 ### CI/CD Pipeline
 The project uses GitHub Actions for continuous integration:
-- **Main CI**: `.github/workflows/ci.yml` - Tests on Python 3.11-3.13, code quality, examples, package build check
+- **Main CI**: `.github/workflows/ci.yml` - Tests on Python 3.11-3.13, code quality, examples, explorer build, package build check
+- **GitHub Pages**: `.github/workflows/pages.yml` - Deploy `explorer/` static UI
 - **Dependencies**: `.github/workflows/dependencies.yml` - Weekly dependency updates and security scans
 
 ### Pre-commit Hooks
@@ -49,6 +50,12 @@ PyTorch CPU wheels are configured in `pyproject.toml` via `[tool.uv.sources]` po
 - Basic usage examples: `uv run python example_usage.py`
 - MNIST benchmark: `uv run python mnist_optimizer_benchmark.py`
 - Simple quadratic optimization: `uv run python minimalist_quadratic_optimization.py`
+
+### Explorer UI
+- Local dev: `cd explorer && npm install && npm run dev`
+- Build for GitHub Pages: `cd explorer && npm run build:pages`
+- Regenerate static JSON: `uv sync --group benchmarking && uv run python scripts/export_explorer_data.py --profile lite`
+- Deploy workflow: `.github/workflows/pages.yml` (publishes `explorer/dist` on push to `main`)
 
 ## Architecture Overview
 

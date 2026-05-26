@@ -17,3 +17,5 @@ dist/
 build
 
 data/
+!explorer/public/data/
+!explorer/public/data/**

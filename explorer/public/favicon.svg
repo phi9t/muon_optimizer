@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" role="img" aria-label="Muon">
+  <defs>
+    <linearGradient id="muonGrad" x1="8" y1="6" x2="40" y2="42" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6366f1"/>
+      <stop offset="1" stop-color="#8b5cf6"/>
+    </linearGradient>
+  </defs>
+  <circle cx="24" cy="24" r="18" fill="none" stroke="url(#muonGrad)" stroke-width="2.5"/>
+  <path fill="none" stroke="#6366f1" stroke-width="2.25" stroke-linecap="round" d="M14 28 L24 14 L34 28"/>
+  <circle cx="24" cy="30" r="3" fill="#06b6d4"/>
+</svg>

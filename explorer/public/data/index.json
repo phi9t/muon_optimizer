@@ -1,0 +1,17 @@
+{
+  "profile": "lite",
+  "suites": [
+    {
+      "id": "mnist",
+      "name": "MNIST CNN",
+      "description": "Small CNN on MNIST comparing SGD, Adam, and Muon.",
+      "data_file": "mnist.json"
+    },
+    {
+      "id": "landscapes",
+      "name": "2D Landscapes",
+      "description": "Classic 2D optimization benchmarks with trajectory overlays.",
+      "data_file": "landscapes/index.json"
+    }
+  ]
+}

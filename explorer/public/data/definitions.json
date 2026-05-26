@@ -1,0 +1,37 @@
+{
+  "metrics": {
+    "best_test_acc": {
+      "plain": "Highest test-set classification accuracy reached during training (%)."
+    },
+    "final_test_acc": {
+      "plain": "Test accuracy after the final epoch (%)."
+    },
+    "convergence_epoch": {
+      "plain": "First epoch where test accuracy reached 95% of the run's best accuracy."
+    },
+    "avg_epoch_time": {
+      "plain": "Mean wall-clock time per training epoch (seconds)."
+    },
+    "final_train_loss": {
+      "plain": "Average training NLL loss on the final epoch."
+    },
+    "total_time": {
+      "plain": "Total training wall-clock time (seconds)."
+    }
+  },
+  "primer": {
+    "muon": "Muon applies SGD momentum, then replaces each 2D parameter update with its nearest orthogonal matrix via Newton-Schulz (or Polar Express) iteration.",
+    "hybrid": "Matrix weights (2D+) use Muon; biases, embeddings, and output heads typically use AdamW."
+  },
+  "optimizers": {
+    "SGD": {
+      "plain": "Stochastic gradient descent with momentum."
+    },
+    "Adam": {
+      "plain": "Adaptive moment estimation."
+    },
+    "Muon": {
+      "plain": "MomentUm Orthogonalized by Newton-schulz."
+    }
+  }
+}

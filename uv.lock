@@ -1034,6 +1034,7 @@ dev = [
 qwen-logits = [
     { name = "accelerate" },
     { name = "huggingface-hub" },
+    { name = "psutil" },
     { name = "safetensors" },
     { name = "transformers" },
 ]
@@ -1090,6 +1091,7 @@ dev = [
 qwen-logits = [
     { name = "accelerate", specifier = ">=1.11.0" },
     { name = "huggingface-hub", specifier = ">=0.36.0" },
+    { name = "psutil", specifier = ">=5.9" },
     { name = "safetensors", specifier = ">=0.6.0" },
     { name = "transformers", specifier = ">=4.57.0" },
 ]

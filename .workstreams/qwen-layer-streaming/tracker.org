@@ -41,13 +41,13 @@ Prefer using Hugging Face Qwen3 module classes one layer at a time. If that cann
 - Modify: =scripts/run_qwen_logits_comparison.py=
 
 *** Steps
-- [ ] Add the package skeleton with importable modules and no side-effect imports of =torch= at package import time.
-- [ ] Extend the existing CLI with =--mode full|streamed=, =--memory-cap-gb 6.0=, =--max-new-tokens 8=, =--kv-cache-dir .qwen_kv_cache=, and =--dry-plan=.
-- [ ] Preserve current behavior when =--mode full= or no mode is supplied.
-- [ ] Route =--mode streamed= to a temporary guarded entrypoint that raises =NotImplementedError("streamed Qwen comparison is not implemented yet")=; Task 6 replaces this with the real comparison loop.
-- [ ] Run =python3 scripts/run_qwen_logits_comparison.py --help= and confirm the new flags appear.
-- [ ] Run =python3 -m py_compile scripts/run_qwen_logits_comparison.py scripts/qwen_streaming/*.py=.
-- [ ] Commit with message =Add streamed Qwen CLI skeleton=.
+- [X] Add the package skeleton with importable modules and no side-effect imports of =torch= at package import time.
+- [X] Extend the existing CLI with =--mode full|streamed=, =--memory-cap-gb 6.0=, =--max-new-tokens 8=, =--kv-cache-dir .qwen_kv_cache=, and =--dry-plan=.
+- [X] Preserve current behavior when =--mode full= or no mode is supplied.
+- [X] Route =--mode streamed= to a temporary guarded entrypoint that raises =NotImplementedError("streamed Qwen comparison is not implemented yet")=; Task 6 replaces this with the real comparison loop.
+- [X] Run =python3 scripts/run_qwen_logits_comparison.py --help= and confirm the new flags appear.
+- [X] Run =python3 -m py_compile scripts/run_qwen_logits_comparison.py scripts/qwen_streaming/*.py=.
+- [X] Commit with message =Add streamed Qwen CLI skeleton=.
 
 ** Task 2: Metadata And Weight Planning
 *** Files
@@ -58,15 +58,15 @@ Prefer using Hugging Face Qwen3 module classes one layer at a time. If that cann
 - Modify: =uv.lock= if dependencies change.
 
 *** Steps
-- [ ] Implement =QwenStreamedModelSpec.from_model_id(model_id: str)= using =huggingface_hub.snapshot_download= with metadata and safetensor allow patterns.
-- [ ] Implement config validation for =model_type == "qwen3"= or compatible Qwen3 causal LM metadata, positive layer counts, positive vocab size, and matching attention-head divisibility.
-- [ ] Implement required tensor planning for =model.embed_tokens.weight=, =model.layers.{i}.*=, =model.norm.weight=, and =lm_head.weight= when embeddings are not tied.
-- [ ] Implement index parsing for =model.safetensors.index.json=.
-- [ ] Implement single-file safetensors planning by inspecting =model.safetensors= keys with =safetensors.safe_open=.
-- [ ] Implement =SafetensorWeightLoader.load_tensor= and =load_tensors= using =safe_open= and CPU =torch.float32= output.
-- [ ] Add tests with tiny temporary safetensors files covering indexed checkpoints, single-file checkpoints, and missing-key errors.
-- [ ] Run =uv run --group qwen-logits pytest qwen_streaming_spec_test.py -v=.
-- [ ] Commit with message =Add Qwen streaming checkpoint planning=.
+- [X] Implement =QwenStreamedModelSpec.from_model_id(model_id: str)= using =huggingface_hub.snapshot_download= with metadata and safetensor allow patterns.
+- [X] Implement config validation for =model_type == "qwen3"= or compatible Qwen3 causal LM metadata, positive layer counts, positive vocab size, and matching attention-head divisibility.
+- [X] Implement required tensor planning for =model.embed_tokens.weight=, =model.layers.{i}.*=, =model.norm.weight=, and =lm_head.weight= when embeddings are not tied.
+- [X] Implement index parsing for =model.safetensors.index.json=.
+- [X] Implement single-file safetensors planning by inspecting =model.safetensors= keys with =safetensors.safe_open=.
+- [X] Implement =SafetensorWeightLoader.load_tensor= and =load_tensors= using =safe_open= and CPU =torch.float32= output.
+- [X] Add tests with tiny temporary safetensors files covering indexed checkpoints, single-file checkpoints, and missing-key errors.
+- [X] Run =uv run --group qwen-logits pytest qwen_streaming_spec_test.py -v=.
+- [X] Commit with message =Add Qwen streaming checkpoint planning=.
 
 ** Task 3: Memory Guard And KV Spill Store
 *** Files
@@ -78,16 +78,16 @@ Prefer using Hugging Face Qwen3 module classes one layer at a time. If that cann
 - Modify: =uv.lock=
 
 *** Steps
-- [ ] Add =psutil>=5.9= to the =qwen-logits= dependency group and update =uv.lock=.
-- [ ] Implement =MemoryGuard(cap_gb: float)= with =check(label: str) -> int= returning current RSS bytes and raising =MemoryError= when over cap.
-- [ ] Include the stage label, RSS in GiB, and cap in GiB in the =MemoryError= message.
-- [ ] Implement =LayerKV= with =key= and =value= tensors.
-- [ ] Implement =KVSpillStore.read(layer_index)= returning =None= when no cache exists.
-- [ ] Implement =KVSpillStore.write(layer_index, kv)= with atomic same-directory replace.
-- [ ] Implement =KVSpillStore.clear()= to remove the prompt cache directory.
-- [ ] Test low-cap failure, generous-cap success, KV round trip, overwrite, and clear behavior.
-- [ ] Run =uv run --group qwen-logits pytest qwen_streaming_memory_test.py qwen_streaming_kv_cache_test.py -v=.
-- [ ] Commit with message =Add memory guard and KV spill store=.
+- [X] Add =psutil>=5.9= to the =qwen-logits= dependency group and update =uv.lock=.
+- [X] Implement =MemoryGuard(cap_gb: float)= with =check(label: str) -> int= returning current RSS bytes and raising =MemoryError= when over cap.
+- [X] Include the stage label, RSS in GiB, and cap in GiB in the =MemoryError= message.
+- [X] Implement =LayerKV= with =key= and =value= tensors.
+- [X] Implement =KVSpillStore.read(layer_index)= returning =None= when no cache exists.
+- [X] Implement =KVSpillStore.write(layer_index, kv)= with atomic same-directory replace.
+- [X] Implement =KVSpillStore.clear()= to remove the prompt cache directory.
+- [X] Test low-cap failure, generous-cap success, KV round trip, overwrite, and clear behavior.
+- [X] Run =uv run --group qwen-logits pytest qwen_streaming_memory_test.py qwen_streaming_kv_cache_test.py -v=.
+- [X] Commit with message =Add memory guard and KV spill store=.
 
 ** Task 4: Qwen3 Manual Tensor Ops
 *** Files
@@ -95,14 +95,14 @@ Prefer using Hugging Face Qwen3 module classes one layer at a time. If that cann
 - Create: =qwen_streaming_model_ops_test.py=
 
 *** Steps
-- [ ] Implement =rms_norm(hidden, weight, eps)= using the Qwen RMSNorm formula =hidden * rsqrt(mean(hidden^2) + eps) * weight=.
-- [ ] Implement rotary embedding helpers for Qwen3 attention using =rope_theta= and explicit integer positions.
-- [ ] Implement grouped-query key/value repetition for =num_attention_heads / num_key_value_heads=.
-- [ ] Implement causal scaled dot-product attention for CPU tensors.
-- [ ] Implement Qwen gated MLP: =down_proj(silu(gate_proj(hidden)) * up_proj(hidden))=.
-- [ ] Test each helper with tiny deterministic tensors and direct PyTorch reference formulas.
-- [ ] Run =uv run --group qwen-logits pytest qwen_streaming_model_ops_test.py -v=.
-- [ ] Commit with message =Add Qwen3 streaming tensor ops=.
+- [X] Implement =rms_norm(hidden, weight, eps)= using the Qwen RMSNorm formula =hidden * rsqrt(mean(hidden^2) + eps) * weight=.
+- [X] Implement rotary embedding helpers for Qwen3 attention using =rope_theta= and explicit integer positions.
+- [X] Implement grouped-query key/value repetition for =num_attention_heads / num_key_value_heads=.
+- [X] Implement causal scaled dot-product attention for CPU tensors.
+- [X] Implement Qwen gated MLP: =down_proj(silu(gate_proj(hidden)) * up_proj(hidden))=.
+- [X] Test each helper with tiny deterministic tensors and direct PyTorch reference formulas.
+- [X] Run =uv run --group qwen-logits pytest qwen_streaming_model_ops_test.py -v=.
+- [X] Commit with message =Add Qwen3 streaming tensor ops=.
 
 ** Task 5: Layer Streamer
 *** Files
@@ -110,15 +110,15 @@ Prefer using Hugging Face Qwen3 module classes one layer at a time. If that cann
 - Create: =qwen_streaming_streamer_test.py=
 
 *** Steps
-- [ ] Implement =QwenLayerStreamer.prefill(input_ids, cache)=.
-- [ ] During prefill, load token embeddings, produce hidden states, free embedding tensors, then process layers from =0= to =num_hidden_layers - 1=.
-- [ ] For each layer, load only that layer's norm, attention, and MLP tensors; compute output hidden states; write that layer's KV cache; delete loaded tensors; call =gc.collect()=; and run =MemoryGuard.check=.
-- [ ] Implement =QwenLayerStreamer.decode_one(token_id, position, cache)=.
-- [ ] During decode, load the existing layer KV from disk, append the new key/value for the generated token, write updated KV back, and continue to the next layer.
-- [ ] Implement =logits_from_hidden(hidden)= using final norm and LM head loaded only for that call.
-- [ ] Test shape correctness with a tiny synthetic Qwen-like checkpoint and one or two layers.
-- [ ] Run =uv run --group qwen-logits pytest qwen_streaming_streamer_test.py -v=.
-- [ ] Commit with message =Add Qwen layer streamer=.
+- [X] Implement =QwenLayerStreamer.prefill(input_ids, cache)=.
+- [X] During prefill, load token embeddings, produce hidden states, free embedding tensors, then process layers from =0= to =num_hidden_layers - 1=.
+- [X] For each layer, load only that layer's norm, attention, and MLP tensors; compute output hidden states; write that layer's KV cache; delete loaded tensors; call =gc.collect()=; and run =MemoryGuard.check=.
+- [X] Implement =QwenLayerStreamer.decode_one(token_id, position, cache)=.
+- [X] During decode, load the existing layer KV from disk, append the new key/value for the generated token, write updated KV back, and continue to the next layer.
+- [X] Implement =logits_from_hidden(hidden)= using final norm and LM head loaded only for that call.
+- [X] Test shape correctness with a tiny synthetic Qwen-like checkpoint and one or two layers.
+- [X] Run =uv run --group qwen-logits pytest qwen_streaming_streamer_test.py -v=.
+- [X] Commit with message =Add Qwen layer streamer=.
 
 ** Task 6: Streamed Generation Comparison
 *** Files
@@ -129,16 +129,16 @@ Prefer using Hugging Face Qwen3 module classes one layer at a time. If that cann
 - Modify: =explorer/src/qwen/QwenLogitsExplorer.tsx= if step selector support is needed.
 
 *** Steps
-- [ ] Implement streamed comparison orchestration that pre-fills student and teacher for one prompt at a time.
-- [ ] Generate tokens greedily from the student using =torch.argmax(student_logits)=.
-- [ ] Decode the teacher for the same generated token and position.
-- [ ] Reuse existing metric logic for teacher/student logits at each generated step.
-- [ ] Emit =metadata=, =prompts[].generated_text=, =prompts[].steps[]=, prompt-level aggregate metrics, and global =aggregate=.
-- [ ] Keep fixed-prompt final-logit output readable by the explorer, or update the explorer to handle both the original and step-aware shape.
-- [ ] Test JSON shape with fake logits and a fake tokenizer.
-- [ ] Run =uv run --group qwen-logits pytest qwen_streaming_output_test.py -v=.
-- [ ] Run =npm --prefix explorer run build= if explorer files changed.
-- [ ] Commit with message =Add streamed Qwen generation comparison=.
+- [X] Implement streamed comparison orchestration that pre-fills student and teacher for one prompt at a time.
+- [X] Generate tokens greedily from the student using =torch.argmax(student_logits)=.
+- [X] Decode the teacher for the same generated token and position.
+- [X] Reuse existing metric logic for teacher/student logits at each generated step.
+- [X] Emit =metadata=, =prompts[].generated_text=, =prompts[].steps[]=, prompt-level aggregate metrics, and global =aggregate=.
+- [X] Keep fixed-prompt final-logit output readable by the explorer, or update the explorer to handle both the original and step-aware shape.
+- [X] Test JSON shape with fake logits and a fake tokenizer.
+- [X] Run =uv run --group qwen-logits pytest qwen_streaming_output_test.py -v=.
+- [X] Run =npm --prefix explorer run build= if explorer files changed.
+- [X] Commit with message =Add streamed Qwen generation comparison=.
 
 ** Task 7: Dry Plan And Runtime Smoke
 *** Files
@@ -147,46 +147,50 @@ Prefer using Hugging Face Qwen3 module classes one layer at a time. If that cann
 - Modify: =scripts/qwen_streaming/spec.py=
 
 *** Steps
-- [ ] Implement =--dry-plan= for streamed mode so it resolves model metadata, validates tokenizer compatibility, validates required tensor keys, prints layer/vocab/cache/memory-cap details, and exits before model math.
-- [ ] Run =uv run --group qwen-logits python scripts/run_qwen_logits_comparison.py --mode streamed --dry-plan --student-model Qwen/Qwen3-0.6B --teacher-model Qwen/Qwen3-1.7B=.
-- [ ] If dry-plan succeeds, run =uv run --group qwen-logits python scripts/run_qwen_logits_comparison.py --mode streamed --limit-prompts 1 --max-new-tokens 1 --memory-cap-gb 6=.
-- [ ] If the smoke run is too slow or blocked by model download, capture the exact reason in the final handoff and leave generated JSON uncommitted.
-- [ ] Run =python3 -m py_compile scripts/run_qwen_logits_comparison.py scripts/qwen_streaming/*.py=.
-- [ ] Run the focused Python tests added by this workstream.
-- [ ] Run =npm --prefix explorer run build=.
-- [ ] Commit with message =Verify streamed Qwen runner= if any verification-only code or docs changed.
+- [X] Implement =--dry-plan= for streamed mode so it resolves model metadata, validates tokenizer compatibility, validates required tensor keys, prints layer/vocab/cache/memory-cap details, and exits before model math.
+- [X] Run =uv run --group qwen-logits python scripts/run_qwen_logits_comparison.py --mode streamed --dry-plan --student-model Qwen/Qwen3-0.6B --teacher-model Qwen/Qwen3-1.7B=.
+- [X] If dry-plan succeeds, run =uv run --group qwen-logits python scripts/run_qwen_logits_comparison.py --mode streamed --limit-prompts 1 --max-new-tokens 1 --memory-cap-gb 6=.
+- [X] If the smoke run is too slow or blocked by model download, capture the exact reason in the final handoff and leave generated JSON uncommitted.
+- [X] Run =python3 -m py_compile scripts/run_qwen_logits_comparison.py scripts/qwen_streaming/*.py=.
+- [X] Run the focused Python tests added by this workstream.
+- [X] Run =npm --prefix explorer run build=.
+- [X] Commit with message =Verify streamed Qwen runner= if any verification-only code or docs changed.
 
 * Acceptance Criteria
 ** Required
-- [ ] The constrained runner is CPU-only.
-- [ ] Default memory cap is 6 GiB RSS and is configurable.
-- [ ] The runner checks RSS at meaningful stage boundaries and fails clearly if the cap is exceeded.
-- [ ] Student and teacher tokenizer ID mappings are validated before logits are compared.
-- [ ] Student and teacher vocab sizes are validated before logits are compared.
-- [ ] Required Qwen3 safetensors keys are validated before long execution begins.
-- [ ] At most one model stage's weights are intentionally resident at a time.
-- [ ] KV cache is spilled per model and per layer to local disk.
-- [ ] Student generation is deterministic by default, using greedy decoding.
-- [ ] Teacher logits are computed for the same generated token positions as the student.
-- [ ] Output JSON includes metadata, prompt-level summaries, generation steps, top-k token payloads, overlap, KL divergence, cosine similarity, mean absolute logit delta, and max absolute logit delta.
-- [ ] Existing explorer UI can show missing-data empty state without breaking.
-- [ ] Existing full-model comparison path remains available unless deliberately replaced by an equivalent CLI mode.
+- [X] The constrained runner is CPU-only.
+- [X] Default memory cap is 6 GiB RSS and is configurable.
+- [X] The runner checks RSS at meaningful stage boundaries and fails clearly if the cap is exceeded.
+- [X] Student and teacher tokenizer ID mappings are validated before logits are compared.
+- [X] Student and teacher vocab sizes are validated before logits are compared.
+- [X] Required Qwen3 safetensors keys are validated before long execution begins.
+- [X] At most one model stage's weights are intentionally resident at a time.
+- [X] KV cache is spilled per model and per layer to local disk.
+- [X] Student generation is deterministic by default, using greedy decoding.
+- [X] Teacher logits are computed for the same generated token positions as the student.
+- [X] Output JSON includes metadata, prompt-level summaries, generation steps, top-k token payloads, overlap, KL divergence, cosine similarity, mean absolute logit delta, and max absolute logit delta.
+- [X] Existing explorer UI can show missing-data empty state without breaking.
+- [X] Existing full-model comparison path remains available unless deliberately replaced by an equivalent CLI mode.
 
 ** Verification
-- [ ] =python3 scripts/run_qwen_logits_comparison.py --help= succeeds or the new constrained command's =--help= succeeds.
-- [ ] A dry-plan or metadata validation mode succeeds without loading full model weights.
-- [ ] Unit tests cover safetensors index parsing, tensor key planning, tokenizer compatibility, memory guard behavior, KV spill round trip, and JSON shape.
-- [ ] =npm --prefix explorer run build= succeeds after any explorer schema/UI changes.
-- [ ] A minimal runtime smoke test with one prompt and one generated token is attempted on this machine, unless explicitly skipped because model download/runtime is too expensive.
+- [X] =python3 scripts/run_qwen_logits_comparison.py --help= succeeds or the new constrained command's =--help= succeeds.
+- [X] A dry-plan or metadata validation mode succeeds without loading full model weights.
+- [X] Unit tests cover safetensors index parsing, tensor key planning, tokenizer compatibility, memory guard behavior, KV spill round trip, and JSON shape.
+- [X] =npm --prefix explorer run build= succeeds after any explorer schema/UI changes.
+- [X] A minimal runtime smoke test with one prompt and one generated token is attempted on this machine, unless explicitly skipped because model download/runtime is too expensive.
 
 ** Non-Goals
-- [ ] Do not build a fully general transformer execution engine.
-- [ ] Do not optimize for speed before memory containment.
-- [ ] Do not require GPU, MPS, or CUDA.
-- [ ] Do not commit downloaded model weights or generated Hugging Face cache files.
+- [X] Do not build a fully general transformer execution engine.
+- [X] Do not optimize for speed before memory containment.
+- [X] Do not require GPU, MPS, or CUDA.
+- [X] Do not commit downloaded model weights or generated Hugging Face cache files.
 
 * Notes
 - Physical memory on this machine is 8 GiB.
 - The cap was chosen as 6 GiB to leave headroom for macOS and shell/browser activity.
 - KV cache stores attention keys and values, not hidden states.
 - Full constrained execution can be slow; implementation should support small smoke runs first.
+- Implementation completed on 2026-05-26 using codex-spark worker agents for Tasks 1-7, followed by local compatibility fixes for real Qwen3 vocab/head-shape behavior.
+- Dry-plan verification succeeded for =Qwen/Qwen3-0.6B= student and =Qwen/Qwen3-1.7B= teacher.
+- Minimal runtime smoke succeeded with =--mode streamed --limit-prompts 1 --max-new-tokens 1 --memory-cap-gb 6 --output /tmp/qwen_stream_smoke.json=.
+- Smoke output contained one prompt, one generated step, and generated token id =576= with text =" The"=.

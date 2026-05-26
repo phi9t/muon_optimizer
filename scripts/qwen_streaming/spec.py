@@ -127,6 +127,7 @@ class QwenStreamedModelSpec:
     rope_theta: float
     rms_norm_eps: float
     tie_word_embeddings: bool
+    max_position_embeddings: int | None
 
     @classmethod
     def from_model_id(cls, model_id: str) -> "QwenStreamedModelSpec":
@@ -147,6 +148,12 @@ class QwenStreamedModelSpec:
         rope_theta = _ensure_positive_float(config, "rope_theta")
         rms_norm_eps = _ensure_positive_float(config, "rms_norm_eps")
         tie_word_embeddings = bool(config.get("tie_word_embeddings", False))
+        max_position_embeddings_raw = config.get("max_position_embeddings")
+        max_position_embeddings = (
+            _ensure_positive_int(config, "max_position_embeddings")
+            if max_position_embeddings_raw is not None
+            else None
+        )
 
         if num_attention_heads % num_key_value_heads != 0:
             raise ValueError(
@@ -177,6 +184,7 @@ class QwenStreamedModelSpec:
             rope_theta=rope_theta,
             rms_norm_eps=rms_norm_eps,
             tie_word_embeddings=tie_word_embeddings,
+            max_position_embeddings=max_position_embeddings,
         )
 
     def required_tensor_names(self) -> list[str]:

@@ -50,7 +50,7 @@ class FakeLoader:
 
 
 class FakeSpec:
-    def __init__(self, model_id: str, vocab_size: int):
+    def __init__(self, model_id: str, vocab_size: int, max_position_embeddings: int | None = 128):
         self.model_id = model_id
         self.local_dir = Path(".")
         self.config = {}
@@ -65,6 +65,7 @@ class FakeSpec:
         self.rope_theta = 10000.0
         self.rms_norm_eps = 1e-6
         self.tie_word_embeddings = False
+        self.max_position_embeddings = max_position_embeddings
 
     def validate_required_tensors(self) -> None:
         return None
@@ -508,4 +509,14 @@ def test_vocab_validation_rejects_mismatched_model_vocab() -> None:
             tokenizer,
             FakeSpec("teacher", vocab_size=len(tokenizer) + 1),
             FakeSpec("student", vocab_size=len(tokenizer)),
+        )
+
+
+def test_context_validation_rejects_too_long_prompt() -> None:
+    with pytest.raises(ValueError, match="exceeds supported Qwen context length"):
+        comparison._validate_context_lengths(
+            prompt_lengths=[5],
+            max_new_tokens=4,
+            teacher_spec=FakeSpec("teacher", vocab_size=6, max_position_embeddings=8),
+            student_spec=FakeSpec("student", vocab_size=6, max_position_embeddings=10),
         )

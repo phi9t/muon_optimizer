@@ -333,6 +333,7 @@ def _spec_plan_summary(spec: QwenStreamedModelSpec) -> Dict[str, Any]:
         "rope_theta": spec.rope_theta,
         "rms_norm_eps": spec.rms_norm_eps,
         "tie_word_embeddings": spec.tie_word_embeddings,
+        "max_position_embeddings": spec.max_position_embeddings,
         "required_tensor_count": len(spec.required_tensor_names()),
         "required_tensors": spec.required_tensor_names(),
         "weight_files": sorted({str(path) for path in set(spec.weight_map.values())}),
@@ -349,8 +350,40 @@ def _describe_prompt_lengths(tokenizer: Any, prompts: List[str]) -> List[int]:
     ]
 
 
+def _validate_context_lengths(
+    prompt_lengths: List[int],
+    max_new_tokens: int,
+    teacher_spec: QwenStreamedModelSpec,
+    student_spec: QwenStreamedModelSpec,
+) -> None:
+    if not prompt_lengths:
+        return
+
+    required_length = max(prompt_lengths) + int(max_new_tokens)
+    context_limits = [
+        limit
+        for limit in (teacher_spec.max_position_embeddings, student_spec.max_position_embeddings)
+        if limit is not None
+    ]
+    if not context_limits:
+        return
+
+    context_limit = min(context_limits)
+    if required_length > context_limit:
+        raise ValueError(
+            "Prompt plus generated tokens exceeds supported Qwen context length. "
+            f"Required {required_length} tokens, smallest model limit is {context_limit}."
+        )
+
+
 def _run_dry_plan(args: Any, teacher_spec: QwenStreamedModelSpec, student_spec: QwenStreamedModelSpec, shared_tokenizer: Any, selected_prompts: List[str]) -> None:
     prompt_lengths = _describe_prompt_lengths(shared_tokenizer, selected_prompts)
+    _validate_context_lengths(
+        prompt_lengths=prompt_lengths,
+        max_new_tokens=int(args.max_new_tokens),
+        teacher_spec=teacher_spec,
+        student_spec=student_spec,
+    )
     kv_plan = _kv_cache_plan_payload(
         student_spec=student_spec,
         teacher_spec=teacher_spec,
@@ -436,6 +469,7 @@ def run_streamed_comparison(args: Any, prompts: List[str] | None = None) -> None
     student_spec = QwenStreamedModelSpec.from_model_id(args.student_model)
     teacher_spec.validate_required_tensors()
     student_spec.validate_required_tensors()
+    prompt_lengths = _describe_prompt_lengths(shared_tokenizer, selected_prompts)
 
     if getattr(args, "dry_plan", False):
         _run_dry_plan(
@@ -448,6 +482,12 @@ def run_streamed_comparison(args: Any, prompts: List[str] | None = None) -> None
         return
 
     _validate_vocab_sizes(shared_tokenizer, teacher_spec, student_spec)
+    _validate_context_lengths(
+        prompt_lengths=prompt_lengths,
+        max_new_tokens=max_new_tokens,
+        teacher_spec=teacher_spec,
+        student_spec=student_spec,
+    )
 
     logging.info(
         "Loading safetensors weight readers and streamed model runners "

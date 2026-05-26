@@ -87,6 +87,7 @@ def _make_spec(tmp_path: Path, config: dict[str, object], weight_map: dict[str, 
         rope_theta=float(config["rope_theta"]),
         rms_norm_eps=float(config["rms_norm_eps"]),
         tie_word_embeddings=tie_word_embeddings,
+        max_position_embeddings=128,
     )
 
 

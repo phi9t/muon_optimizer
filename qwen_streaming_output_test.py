@@ -52,7 +52,7 @@ class FakeLoader:
 class FakeSpec:
     def __init__(self, model_id: str, vocab_size: int, max_position_embeddings: int | None = 128):
         self.model_id = model_id
-        self.local_dir = Path(".")
+        self.local_dir = Path(".").resolve()
         self.config = {}
         self.weight_map = {f"{model_id}-weights": Path("fake.safetensors")}
         self.vocab_size = vocab_size
@@ -133,6 +133,18 @@ def _make_fake_tokenizer_for_prompts(
     )
 
 
+def _fake_transformer_factory(tokenizer: FakeTokenizer):
+    def fake_transformers():
+        class AutoTokenizer:
+            @staticmethod
+            def from_pretrained(model_id: str, **kwargs) -> FakeTokenizer:  # noqa: ARG001
+                return tokenizer
+
+        return (AutoTokenizer,)
+
+    return fake_transformers
+
+
 def _make_args(
     tmp_path: Path,
     *,
@@ -140,6 +152,8 @@ def _make_args(
     limit_prompts: int = 1,
     max_new_tokens: int = 2,
     memory_cap_gb: float = 1.0,
+    hf_cache_dir: Path | None = None,
+    offline: bool = False,
 ) -> SimpleNamespace:
     return SimpleNamespace(
         top_k=top_k,
@@ -147,6 +161,8 @@ def _make_args(
         max_new_tokens=max_new_tokens,
         memory_cap_gb=memory_cap_gb,
         kv_cache_dir=tmp_path / "kv_cache",
+        hf_cache_dir=hf_cache_dir,
+        offline=offline,
         output=tmp_path / "qwen_logits.json",
         student_model="student",
         teacher_model="teacher",
@@ -180,7 +196,7 @@ def test_streamed_comparison_shape_and_step_metrics(tmp_path: Path, monkeypatch:
     def fake_loader(*, weight_map, dtype):  # noqa: ARG001
         return FakeLoader(weight_map=weight_map, dtype=dtype)
 
-    def fake_from_model_id(model_id: str) -> FakeSpec:
+    def fake_from_model_id(model_id: str, **_kwargs) -> FakeSpec:
         return FakeSpec(model_id=model_id, vocab_size=len(tokenizer))
 
     def fake_streamer_ctor(*, spec, loader, memory_guard, model_label=None) -> FakeStreamer:
@@ -188,15 +204,7 @@ def test_streamed_comparison_shape_and_step_metrics(tmp_path: Path, monkeypatch:
             return fake_student
         return fake_teacher
 
-    def fake_transformers():
-        class AutoTokenizer:
-            @staticmethod
-            def from_pretrained(model_id: str) -> FakeTokenizer:
-                return tokenizer
-
-        return (AutoTokenizer,)
-
-    monkeypatch.setattr(comparison, "_load_transformers", fake_transformers)
+    monkeypatch.setattr(comparison, "_load_transformers", _fake_transformer_factory(tokenizer))
     monkeypatch.setattr(comparison, "SafetensorWeightLoader", fake_loader)
     monkeypatch.setattr(comparison, "QwenStreamedModelSpec", SimpleNamespace(from_model_id=fake_from_model_id))
     monkeypatch.setattr(comparison, "QwenLayerStreamer", fake_streamer_ctor)
@@ -261,7 +269,7 @@ def test_streamed_comparison_uses_student_argmax_and_shared_positions(tmp_path: 
     def fake_loader(*, weight_map, dtype):  # noqa: ARG001
         return FakeLoader(weight_map=weight_map, dtype=dtype)
 
-    def fake_from_model_id(model_id: str) -> FakeSpec:
+    def fake_from_model_id(model_id: str, **_kwargs) -> FakeSpec:
         return FakeSpec(model_id=model_id, vocab_size=len(tokenizer))
 
     def fake_streamer_ctor(*, spec, loader, memory_guard, model_label=None) -> FakeStreamer:
@@ -269,15 +277,7 @@ def test_streamed_comparison_uses_student_argmax_and_shared_positions(tmp_path: 
             return fake_student
         return fake_teacher
 
-    def fake_transformers():
-        class AutoTokenizer:
-            @staticmethod
-            def from_pretrained(model_id: str) -> FakeTokenizer:
-                return tokenizer
-
-        return (AutoTokenizer,)
-
-    monkeypatch.setattr(comparison, "_load_transformers", fake_transformers)
+    monkeypatch.setattr(comparison, "_load_transformers", _fake_transformer_factory(tokenizer))
     monkeypatch.setattr(comparison, "SafetensorWeightLoader", fake_loader)
     monkeypatch.setattr(comparison, "QwenStreamedModelSpec", SimpleNamespace(from_model_id=fake_from_model_id))
     monkeypatch.setattr(comparison, "QwenLayerStreamer", fake_streamer_ctor)
@@ -322,7 +322,10 @@ def test_streamed_dry_plan_reports_checks_and_skips_streamer(
     def fake_loader(*, weight_map, dtype):  # noqa: ARG001
         return FakeLoader(weight_map=weight_map, dtype=dtype)
 
-    def fake_from_model_id(model_id: str) -> FakeSpec:
+    spec_calls: list[dict[str, object]] = []
+
+    def fake_from_model_id(model_id: str, **kwargs) -> FakeSpec:
+        spec_calls.append({"model_id": model_id, **kwargs})
         return FakeSpec(model_id=model_id, vocab_size=len(tokenizer))
 
     streamer_init_calls = {"count": 0}
@@ -331,10 +334,13 @@ def test_streamed_dry_plan_reports_checks_and_skips_streamer(
         streamer_init_calls["count"] += 1
         raise AssertionError("Streamers should not be constructed during dry-plan.")
 
+    tokenizer_calls: list[dict[str, object]] = []
+
     def fake_transformers():
         class AutoTokenizer:
             @staticmethod
-            def from_pretrained(model_id: str) -> FakeTokenizer:  # noqa: ARG001
+            def from_pretrained(model_id: str, **kwargs) -> FakeTokenizer:
+                tokenizer_calls.append({"model_id": model_id, **kwargs})
                 return tokenizer
 
         return (AutoTokenizer,)
@@ -345,6 +351,8 @@ def test_streamed_dry_plan_reports_checks_and_skips_streamer(
     monkeypatch.setattr(comparison, "QwenLayerStreamer", fake_streamer_ctor)
 
     args = _make_args(tmp_path=tmp_path)
+    args.hf_cache_dir = tmp_path / "hf_cache"
+    args.offline = True
     args.dry_plan = True
     comparison.run_streamed_comparison(args, prompts=["prompt one"])
     output = capsys.readouterr().out
@@ -358,7 +366,22 @@ def test_streamed_dry_plan_reports_checks_and_skips_streamer(
     assert payload["cache_and_memory"]["prompt_count"] == 1
     assert payload["cache_and_memory"]["kv_cache_dir"] == str((tmp_path / "kv_cache").resolve())
     assert payload["cache_and_memory"]["generated_tokens_per_prompt"] == args.max_new_tokens
+    assert payload["cache_and_memory"]["hf_cache_dir"] == str((tmp_path / "hf_cache").resolve())
+    assert payload["cache_and_memory"]["local_files_only"] is True
+    assert payload["cache_and_memory"]["snapshot_dirs"]["student"] == str(Path(".").resolve())
+    assert payload["cache_and_memory"]["snapshot_dirs"]["teacher"] == str(Path(".").resolve())
+    assert args.offline is True
     assert streamer_init_calls["count"] == 0
+    assert len(tokenizer_calls) == 2
+    assert tokenizer_calls[0]["cache_dir"] == (tmp_path / "hf_cache").resolve()
+    assert tokenizer_calls[0]["local_files_only"] is True
+    assert tokenizer_calls[1]["cache_dir"] == (tmp_path / "hf_cache").resolve()
+    assert tokenizer_calls[1]["local_files_only"] is True
+    assert len(spec_calls) == 2
+    assert spec_calls[0]["cache_dir"] == (tmp_path / "hf_cache").resolve()
+    assert spec_calls[0]["local_files_only"] is True
+    assert spec_calls[1]["cache_dir"] == (tmp_path / "hf_cache").resolve()
+    assert spec_calls[1]["local_files_only"] is True
 
 
 def test_streamed_aggregate_denominator_uses_total_steps(
@@ -398,7 +421,7 @@ def test_streamed_aggregate_denominator_uses_total_steps(
     def fake_loader(*, weight_map, dtype):  # noqa: ARG001
         return FakeLoader(weight_map=weight_map, dtype=dtype)
 
-    def fake_from_model_id(model_id: str) -> FakeSpec:
+    def fake_from_model_id(model_id: str, **_kwargs) -> FakeSpec:
         return FakeSpec(model_id=model_id, vocab_size=len(tokenizer))
 
     def fake_streamer_ctor(*, spec, loader, memory_guard, model_label=None):  # noqa: ARG001
@@ -406,15 +429,7 @@ def test_streamed_aggregate_denominator_uses_total_steps(
             return fake_student
         return fake_teacher
 
-    def fake_transformers():
-        class AutoTokenizer:
-            @staticmethod
-            def from_pretrained(model_id: str) -> FakeTokenizer:  # noqa: ARG001
-                return tokenizer
-
-        return (AutoTokenizer,)
-
-    monkeypatch.setattr(comparison, "_load_transformers", fake_transformers)
+    monkeypatch.setattr(comparison, "_load_transformers", _fake_transformer_factory(tokenizer))
     monkeypatch.setattr(comparison, "SafetensorWeightLoader", fake_loader)
     monkeypatch.setattr(comparison, "QwenStreamedModelSpec", SimpleNamespace(from_model_id=fake_from_model_id))
     monkeypatch.setattr(comparison, "QwenLayerStreamer", fake_streamer_ctor)
@@ -470,7 +485,7 @@ def test_streamed_comparison_allows_reserved_model_vocab_rows(
     def fake_loader(*, weight_map, dtype):  # noqa: ARG001
         return FakeLoader(weight_map=weight_map, dtype=dtype)
 
-    def fake_from_model_id(model_id: str) -> FakeSpec:
+    def fake_from_model_id(model_id: str, **_kwargs) -> FakeSpec:
         return FakeSpec(model_id=model_id, vocab_size=reserved_token_id + 1)
 
     def fake_streamer_ctor(*, spec, loader, memory_guard, model_label=None):  # noqa: ARG001
@@ -478,15 +493,7 @@ def test_streamed_comparison_allows_reserved_model_vocab_rows(
             return fake_student
         return fake_teacher
 
-    def fake_transformers():
-        class AutoTokenizer:
-            @staticmethod
-            def from_pretrained(model_id: str) -> FakeTokenizer:  # noqa: ARG001
-                return tokenizer
-
-        return (AutoTokenizer,)
-
-    monkeypatch.setattr(comparison, "_load_transformers", fake_transformers)
+    monkeypatch.setattr(comparison, "_load_transformers", _fake_transformer_factory(tokenizer))
     monkeypatch.setattr(comparison, "SafetensorWeightLoader", fake_loader)
     monkeypatch.setattr(comparison, "QwenStreamedModelSpec", SimpleNamespace(from_model_id=fake_from_model_id))
     monkeypatch.setattr(comparison, "QwenLayerStreamer", fake_streamer_ctor)

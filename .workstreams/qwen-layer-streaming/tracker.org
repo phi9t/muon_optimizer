@@ -171,6 +171,7 @@ Prefer using Hugging Face Qwen3 module classes one layer at a time. If that cann
 - [X] Output JSON includes metadata, prompt-level summaries, generation steps, top-k token payloads, overlap, KL divergence, cosine similarity, mean absolute logit delta, and max absolute logit delta.
 - [X] Existing explorer UI can show missing-data empty state without breaking.
 - [X] Existing full-model comparison path remains available unless deliberately replaced by an equivalent CLI mode.
+- [X] Streamed runner supports explicit Hugging Face cache control via `--hf-cache-dir` and `--offline` and includes resolved snapshot/cache settings in dry-plan output.
 
 ** Verification
 - [X] =python3 scripts/run_qwen_logits_comparison.py --help= succeeds or the new constrained command's =--help= succeeds.
@@ -194,3 +195,4 @@ Prefer using Hugging Face Qwen3 module classes one layer at a time. If that cann
 - Dry-plan verification succeeded for =Qwen/Qwen3-0.6B= student and =Qwen/Qwen3-1.7B= teacher.
 - Minimal runtime smoke succeeded with =--mode streamed --limit-prompts 1 --max-new-tokens 1 --memory-cap-gb 6 --output /tmp/qwen_stream_smoke.json=.
 - Smoke output contained one prompt, one generated step, and generated token id =576= with text =" The"=.
+- Added explicit streamed HF cache control options (`--hf-cache-dir`, `--offline`) with resolved snapshot-dir reporting in dry-plans.

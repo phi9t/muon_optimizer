@@ -39,6 +39,12 @@ def _load_transformers() -> Tuple[Any, Any]:
     return (AutoTokenizer,)
 
 
+def _resolve_hf_cache_dir(raw_cache_dir: Path | None) -> Path | None:
+    if raw_cache_dir is None:
+        return None
+    return Path(raw_cache_dir).resolve()
+
+
 def _validate_prompt_count(prompts: List[str], limit: int) -> List[str]:
     if limit <= 0:
         raise ValueError("--limit-prompts must be a positive integer.")
@@ -377,6 +383,7 @@ def _validate_context_lengths(
 
 
 def _run_dry_plan(args: Any, teacher_spec: QwenStreamedModelSpec, student_spec: QwenStreamedModelSpec, shared_tokenizer: Any, selected_prompts: List[str]) -> None:
+    hf_cache_dir = _resolve_hf_cache_dir(getattr(args, "hf_cache_dir", None))
     prompt_lengths = _describe_prompt_lengths(shared_tokenizer, selected_prompts)
     _validate_context_lengths(
         prompt_lengths=prompt_lengths,
@@ -393,6 +400,12 @@ def _run_dry_plan(args: Any, teacher_spec: QwenStreamedModelSpec, student_spec: 
     )
     cache = {
         **kv_plan,
+        "hf_cache_dir": str(hf_cache_dir) if hf_cache_dir is not None else None,
+        "local_files_only": bool(getattr(args, "offline", False)),
+        "snapshot_dirs": {
+            "teacher": str(teacher_spec.local_dir),
+            "student": str(student_spec.local_dir),
+        },
         "memory_cap_gb": float(args.memory_cap_gb),
         "cache_per_model_per_prompt_kv_gib": {
             "student": kv_plan["per_model_max_kv_bytes"]["student"] / (1024**3),
@@ -459,14 +472,28 @@ def run_streamed_comparison(args: Any, prompts: List[str] | None = None) -> None
 
     logging.info("Loading tokenizers.")
     (AutoTokenizer,) = _load_transformers()
-    student_tokenizer = AutoTokenizer.from_pretrained(args.student_model)
-    teacher_tokenizer = AutoTokenizer.from_pretrained(args.teacher_model)
+    hf_cache_dir = _resolve_hf_cache_dir(getattr(args, "hf_cache_dir", None))
+    local_files_only = bool(getattr(args, "offline", False))
+    tokenizer_kwargs = {
+        "cache_dir": hf_cache_dir,
+        "local_files_only": local_files_only,
+    }
+    student_tokenizer = AutoTokenizer.from_pretrained(args.student_model, **tokenizer_kwargs)
+    teacher_tokenizer = AutoTokenizer.from_pretrained(args.teacher_model, **tokenizer_kwargs)
     _validate_tokenizer_compatibility(teacher_tokenizer, student_tokenizer)
     shared_tokenizer = teacher_tokenizer
 
     logging.info("Building model specs from checkpoints.")
-    teacher_spec = QwenStreamedModelSpec.from_model_id(args.teacher_model)
-    student_spec = QwenStreamedModelSpec.from_model_id(args.student_model)
+    teacher_spec = QwenStreamedModelSpec.from_model_id(
+        args.teacher_model,
+        cache_dir=hf_cache_dir,
+        local_files_only=local_files_only,
+    )
+    student_spec = QwenStreamedModelSpec.from_model_id(
+        args.student_model,
+        cache_dir=hf_cache_dir,
+        local_files_only=local_files_only,
+    )
     teacher_spec.validate_required_tensors()
     student_spec.validate_required_tensors()
     prompt_lengths = _describe_prompt_lengths(shared_tokenizer, selected_prompts)

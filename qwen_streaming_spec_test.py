@@ -126,10 +126,35 @@ def _make_linear_shards(config: dict[str, object], tie_word_embeddings: bool) ->
     }
 
 
-def _patch_snapshot(monkeypatch, local_dir: Path):
+def _patch_snapshot(
+    monkeypatch,
+    local_dir: Path,
+    *,
+    capture: list[dict[str, object]] | None = None,
+) -> None:
+    def fake_snapshot_download(
+        repo_id: str,
+        allow_patterns=(),
+        *,
+        cache_dir=None,
+        local_files_only=False,
+        **kwargs,
+    ) -> str:
+        if capture is not None:
+            capture.append(
+                {
+                    "repo_id": repo_id,
+                    "cache_dir": cache_dir,
+                    "local_files_only": bool(local_files_only),
+                    "allow_patterns": allow_patterns,
+                    "kwargs": kwargs,
+                }
+            )
+        return str(local_dir)
+
     monkeypatch.setattr(
         "scripts.qwen_streaming.spec.snapshot_download",
-        lambda repo_id, allow_patterns=(): str(local_dir),
+        fake_snapshot_download,
     )
 
 
@@ -186,10 +211,28 @@ def test_validate_required_tensors_reports_missing_keys(monkeypatch, tmp_path: P
     tensor_map.pop("lm_head.weight")
     _write_single_file_checkpoint(tmp_path, config, tensor_map)
     _patch_snapshot(monkeypatch, tmp_path)
-
     spec = QwenStreamedModelSpec.from_model_id("local/test")
     with pytest.raises(ValueError, match="Missing required tensors"):
         spec.validate_required_tensors()
+
+
+def test_from_model_id_threads_cache_control_flags(monkeypatch, tmp_path: Path) -> None:
+    config = dict(_QWEN2_CONFIG)
+    _write_single_file_checkpoint(tmp_path, config, tensors={"lm_head.weight": torch.randn(42, 16)})
+    captured: list[dict[str, object]] = []
+    cache_dir = tmp_path / "hf-cache"
+    _patch_snapshot(monkeypatch, tmp_path, capture=captured)
+
+    spec = QwenStreamedModelSpec.from_model_id(
+        "local/test",
+        cache_dir=cache_dir,
+        local_files_only=True,
+    )
+
+    assert spec.local_dir == tmp_path.resolve()
+    assert captured, "snapshot_download should be called"
+    assert captured[0]["cache_dir"] == str(cache_dir)
+    assert captured[0]["local_files_only"] is True
 
 
 def test_safetensor_loader_returns_cpu_float32(monkeypatch, tmp_path: Path):

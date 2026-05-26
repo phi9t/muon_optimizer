@@ -130,10 +130,30 @@ class QwenStreamedModelSpec:
     max_position_embeddings: int | None
 
     @classmethod
-    def from_model_id(cls, model_id: str) -> "QwenStreamedModelSpec":
-        local_dir = Path(
-            snapshot_download(repo_id=model_id, allow_patterns=_WEIGHT_ALLOW_PATTERNS)
-        ).resolve()
+    def from_model_id(
+        cls,
+        model_id: str,
+        cache_dir: Path | None = None,
+        local_files_only: bool = False,
+    ) -> "QwenStreamedModelSpec":
+        download_kwargs = {
+            "repo_id": model_id,
+            "allow_patterns": _WEIGHT_ALLOW_PATTERNS,
+            "local_files_only": local_files_only,
+        }
+        if cache_dir is not None:
+            download_kwargs["cache_dir"] = str(cache_dir)
+
+        try:
+            local_dir = Path(snapshot_download(**download_kwargs)).resolve()
+        except Exception as exc:
+            if local_files_only:
+                cache_location = str(cache_dir.resolve()) if cache_dir is not None else "default cache location"
+                raise FileNotFoundError(
+                    f"HF snapshot for {model_id!r} is not available locally at {cache_location}. "
+                    "Rerun without --offline to allow download."
+                ) from exc
+            raise
 
         config = _read_model_config(local_dir)
         _validate_qwen3_architecture(config)

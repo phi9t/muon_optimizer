@@ -77,6 +77,17 @@ def parse_args() -> argparse.Namespace:
         help="Directory for streamed KV cache files (default: .qwen_kv_cache).",
     )
     parser.add_argument(
+        "--hf-cache-dir",
+        type=Path,
+        default=None,
+        help="Hugging Face cache directory for streamed snapshots/tokenizers (default: HF default).",
+    )
+    parser.add_argument(
+        "--offline",
+        action="store_true",
+        help="Streamed mode: load from local cache only and fail if files are missing.",
+    )
+    parser.add_argument(
         "--dry-plan",
         action="store_true",
         help="Show streaming plan and exit without running generation (streamed mode only).",

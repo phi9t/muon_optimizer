@@ -1,6 +1,6 @@
 # Pre-commit hooks configuration
 # See https://pre-commit.com for more information
-# Install with: pip install pre-commit && pre-commit install
+# Install with: uv sync && uv run pre-commit install
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -58,7 +58,7 @@ repos:
     hooks:
       - id: pytest-check
         name: pytest-check
-        entry: python -m pytest muon_optimizer_test.py -x -v --tb=short
+        entry: uv run pytest muon_optimizer_test.py -x -v --tb=short
         language: system
         pass_filenames: false
         always_run: true
@@ -66,7 +66,7 @@ repos:
 
       - id: example-tests
         name: example-tests
-        entry: python -m pytest example_usage_test.py::TestTableFunctions -v --tb=short
+        entry: uv run pytest example_usage_test.py::TestTableFunctions -v --tb=short
         language: system
         pass_filenames: false
         always_run: true

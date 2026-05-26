@@ -28,10 +28,9 @@ classifiers = [
 
 dependencies = [
     "torch>=2.7.1",
-    "rich>=14.0.0",
 ]
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
@@ -41,6 +40,35 @@ dev = [
     "flake8>=6.0.0",
     "mypy>=1.0.0",
     "pre-commit>=3.0.0",
+    "numpy>=1.24.0",
+    "rich>=14.0.0",
+]
+benchmarking = [
+    "matplotlib>=3.10.0",
+    "plotly>=6.0.0",
+    "seaborn>=0.13.0",
+    "dash>=3.1.0",
+    "dash-bootstrap-components>=2.0.0",
+    "torchvision>=0.22.0",
+    "numpy>=1.24.0",
+    "pillow>=10.0.0",
+]
+
+[project.optional-dependencies]
+examples = [
+    "rich>=14.0.0",
+]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "pytest-xdist>=3.0.0",
+    "black>=24.0.0",
+    "isort>=5.12.0",
+    "flake8>=6.0.0",
+    "mypy>=1.0.0",
+    "pre-commit>=3.0.0",
+    "numpy>=1.24.0",
+    "rich>=14.0.0",
 ]
 benchmarking = [
     "matplotlib>=3.10.0",
@@ -53,8 +81,20 @@ benchmarking = [
     "pillow>=10.0.0",
 ]
 all = [
-    "muon-optimizer[dev,benchmarking]",
+    "muon-optimizer[dev,benchmarking,examples]",
 ]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
+torchvision = { index = "pytorch-cpu" }
+
+[tool.uv]
+default-groups = ["dev"]
 
 [project.urls]
 Homepage = "https://github.com/phi9t/muon_optimizer"
@@ -119,6 +159,9 @@ addopts = [
     "--strict-markers",
     "--strict-config",
     "--disable-warnings",
+]
+markers = [
+    "slow: integration tests that run full training loops (deselect with '-m \"not slow\"')",
 ]
 testpaths = ["."]
 python_files = ["*_test.py", "test_*.py"]

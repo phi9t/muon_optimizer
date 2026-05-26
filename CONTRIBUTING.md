@@ -14,28 +14,24 @@ Thank you for your interest in contributing to the Muon Optimizer project! This 
 
 2. **Set up development environment**:
    ```bash
-   # Create virtual environment
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   
-   # Install dependencies
-   pip install -e .[dev]
-   
+   # Install uv: https://docs.astral.sh/uv/getting-started/installation/
+   curl -LsSf https://astral.sh/uv/install.sh | sh
+
+   # Install dependencies (CPU PyTorch is configured in pyproject.toml)
+   uv sync
+
    # Install pre-commit hooks
-   pip install pre-commit
-   pre-commit install
+   uv run pre-commit install
    ```
 
 3. **Verify your setup**:
    ```bash
-   # Run tests
-   pytest muon_optimizer_test.py -v
-   pytest example_usage_test.py -v
-   
-   # Check code quality
-   black --check muon_optimizer.py
-   flake8 muon_optimizer.py
-   mypy muon_optimizer.py
+   uv run pytest muon_optimizer_test.py -v
+   uv run pytest example_usage_test.py -m "not slow" -v
+
+   uv run black --check muon_optimizer.py
+   uv run flake8 muon_optimizer.py
+   uv run mypy muon_optimizer.py
    ```
 
 ## 🧪 Testing
@@ -128,11 +124,10 @@ pre-commit run --all-files
 - Related issue references
 
 **Checklist for PRs**:
-- [ ] Tests pass locally (`pytest -v`)
-- [ ] Code is formatted (`black`, `isort`)
-- [ ] Linting passes (`flake8`, `mypy`)
+- [ ] Tests pass locally (`uv run pytest muon_optimizer_test.py -v` and `uv run pytest example_usage_test.py -m "not slow" -v`)
+- [ ] Code is formatted (`uv run black`, `uv run isort`)
+- [ ] Linting passes (`uv run flake8`, `uv run mypy`)
 - [ ] Documentation updated if needed
-- [ ] Changelog entry added (for releases)
 
 ## 🏗️ Architecture Guidelines
 
@@ -169,22 +164,6 @@ pre-commit run --all-files
 ### Reporting Security Issues
 For security vulnerabilities, please email [maintainer] instead of creating public issues.
 
-## 📋 Release Process
-
-### Version Numbering
-We follow [Semantic Versioning](https://semver.org/):
-- `MAJOR.MINOR.PATCH`
-- `MAJOR`: Breaking changes
-- `MINOR`: New features (backwards compatible)
-- `PATCH`: Bug fixes
-
-### Release Workflow
-1. Update version in `muon_optimizer.py`
-2. Update `CHANGELOG.md` 
-3. Create git tag: `git tag -a v1.0.0 -m "Version 1.0.0"`
-4. Push tag: `git push origin v1.0.0`
-5. GitHub Actions will handle the release
-
 ## ❓ Getting Help
 
 ### Resources
@@ -202,7 +181,6 @@ We follow [Semantic Versioning](https://semver.org/):
 
 Contributors will be recognized in:
 - GitHub contributors list
-- Release notes for significant contributions
 - README acknowledgments
 
 ---

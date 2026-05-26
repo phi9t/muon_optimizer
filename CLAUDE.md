@@ -4,42 +4,51 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
+This project uses [uv](https://docs.astral.sh/uv/) for Python environments and dependency management. PyTorch is resolved from the CPU wheel index by default.
+
+### Setup
+- Install uv: `curl -LsSf https://astral.sh/uv/install.sh | sh`
+- Create/sync environment: `uv sync`
+- Sync with benchmarks: `uv sync --group benchmarking`
+- Sync everything: `uv sync --all-groups`
+
 ### Testing
-- Run all tests: `python -m pytest muon_optimizer_test.py -v`
-- Run example tests: `python -m pytest example_usage_test.py -v`
-- Run specific test class: `python -m pytest muon_optimizer_test.py::TestMuonOptimizer -v`
-- Run single test method: `python -m pytest muon_optimizer_test.py::TestMuonOptimizer::test_initialization -v`
+- Run all tests: `uv run pytest muon_optimizer_test.py -v`
+- Run example tests: `uv run pytest example_usage_test.py -v`
+- Run specific test class: `uv run pytest muon_optimizer_test.py::TestMuonOptimizer -v`
+- Run single test method: `uv run pytest muon_optimizer_test.py::TestMuonOptimizer::test_initialization -v`
 
 ### Code Quality
-The project includes development dependencies for code quality tools (in setup.py extras_require):
-- Code formatting: `black --line-length=120 muon_optimizer.py`
-- Import sorting: `isort --line-length=120 muon_optimizer.py`
-- Linting: `flake8 muon_optimizer.py --max-line-length=120 --extend-ignore=E203,W503,E501`
-- Type checking: `mypy muon_optimizer.py`
+Development tools are installed via the `dev` dependency group (`uv sync` includes it by default):
+- Code formatting: `uv run black --line-length=120 muon_optimizer.py`
+- Import sorting: `uv run isort --line-length=120 muon_optimizer.py`
+- Linting: `uv run flake8 muon_optimizer.py --max-line-length=120 --extend-ignore=E203,W503,E501`
+- Type checking: `uv run mypy muon_optimizer.py`
 
 Note: The project uses a 120-character line length limit with E501 (line too long) errors ignored for flexibility.
 
 ### CI/CD Pipeline
-The project uses GitHub Actions for continuous integration and deployment:
-- **Main CI**: `.github/workflows/ci.yml` - Tests on Python 3.11-3.13, code quality, examples
-- **Release**: `.github/workflows/release.yml` - Automated package publishing to PyPI
+The project uses GitHub Actions for continuous integration:
+- **Main CI**: `.github/workflows/ci.yml` - Tests on Python 3.11-3.13, code quality, examples, package build check
 - **Dependencies**: `.github/workflows/dependencies.yml` - Weekly dependency updates and security scans
 
 ### Pre-commit Hooks
 Install and use pre-commit hooks for local development:
-- Install: `pip install pre-commit && pre-commit install`
-- Run manually: `pre-commit run --all-files`
+- Install hooks: `uv run pre-commit install`
+- Run manually: `uv run pre-commit run --all-files`
 - Configuration: `.pre-commit-config.yaml`
 
 ### Installation
-- Development install: `pip install -e .`
-- Install with dev dependencies: `pip install -e .[dev]`
-- Install dependencies from pyproject.toml: `pip install -r requirements.txt` (if generated) or directly from pyproject.toml
+- Development install: `uv sync`
+- Install with benchmarking tools: `uv sync --group benchmarking`
+- Install all groups: `uv sync --all-groups`
+
+PyTorch CPU wheels are configured in `pyproject.toml` via `[tool.uv.sources]` pointing at `https://download.pytorch.org/whl/cpu`.
 
 ### Running Examples
-- Basic usage examples: `python example_usage.py`
-- MNIST benchmark: `python mnist_optimizer_benchmark.py`
-- Simple quadratic optimization: `python minimalist_quadratic_optimization.py`
+- Basic usage examples: `uv run python example_usage.py`
+- MNIST benchmark: `uv run python mnist_optimizer_benchmark.py`
+- Simple quadratic optimization: `uv run python minimalist_quadratic_optimization.py`
 
 ## Architecture Overview
 
@@ -112,6 +121,11 @@ The test suite (`muon_optimizer_test.py`) covers:
 - Learning rate scheduling: Standard PyTorch schedulers work with all optimizer classes
 
 ## Dependencies
-Core: PyTorch >=1.9.0 (>=2.7.1 in pyproject.toml)
-Benchmarking: dash, plotly, matplotlib, torchvision, rich, seaborn
+Core: PyTorch >=2.7.1 (CPU index configured in pyproject.toml for uv)
+Examples: rich (optional `[examples]` extra)
+Benchmarking: dash, plotly, matplotlib, torchvision, seaborn
 Development: pytest, black, isort, flake8, mypy
+
+## CI testing
+- Example tests in CI use `pytest example_usage_test.py -m "not slow"` for speed
+- Full integration tests: `pytest example_usage_test.py -m slow -v`

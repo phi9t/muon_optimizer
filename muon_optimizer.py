@@ -20,7 +20,9 @@ License: MIT
 """
 
 import logging
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
+import warnings
+from itertools import repeat
+from typing import Any, Callable, Dict, Iterable, List, Literal, Optional, Tuple, Union
 
 import torch
 import torch.distributed as dist
@@ -30,6 +32,174 @@ from torch.optim import Optimizer
 
 # Configure logging
 logger = logging.getLogger(__name__)
+
+PolarMethod = Literal["polar_express", "newton_schulz"]
+
+ADAMW_NAME_FRAGMENTS = [
+    "embed",
+    "embedding",
+    "wte",
+    "wpe",
+    "lm_head",
+    "head",
+    "unembed",
+    "norm",
+    "ln_",
+    "layernorm",
+    "rmsnorm",
+    "bias",
+]
+
+MUON_PARAM_GROUP_KEYS = frozenset(
+    {
+        "params",
+        "lr",
+        "momentum",
+        "weight_decay",
+        "steps",
+        "polar_method",
+        "compute_dtype",
+        "nesterov",
+        "use_muon",
+    }
+)
+
+# Raw degree-5 Polar Express coefficients from Appendix A.
+# Each tuple is (a, b, c) for p(x) = a*x + b*x^3 + c*x^5.
+_POLAR_EXPRESS_COEFFS_RAW: List[Tuple[float, float, float]] = [
+    (8.28721201814563, -23.595886519098837, 17.300387312530933),
+    (4.107059111542203, -2.9478499167379106, 0.5448431082926601),
+    (3.9486908534822946, -2.908902115962949, 0.5518191394370137),
+    (3.3184196573706015, -2.488488024314874, 0.51004894012372),
+    (2.300652019954817, -1.6689039845747493, 0.4188073119525673),
+    (1.891301407787398, -1.2679958271945868, 0.37680408948524835),
+    (1.8750014808534479, -1.2500016453999487, 0.3750001645474248),
+    (1.875, -1.25, 0.375),
+]
+
+
+def _stabilize_coeffs(
+    coeffs: List[Tuple[float, float, float]], safety: float = 1.01
+) -> List[Tuple[float, float, float]]:
+    """Apply p_t(x / safety) for all but the final asymptotic polynomial."""
+    return [(a / safety, b / safety**3, c / safety**5) for (a, b, c) in coeffs[:-1]] + [coeffs[-1]]
+
+
+_POLAR_EXPRESS_COEFFS = _stabilize_coeffs(_POLAR_EXPRESS_COEFFS_RAW)
+
+
+def _resolve_steps(steps: Optional[int] = None, ns_steps: Optional[int] = None) -> int:
+    if steps is not None and ns_steps is not None and steps != ns_steps:
+        raise ValueError(f"Cannot specify both steps and ns_steps with different values: {steps} vs {ns_steps}")
+    if ns_steps is not None:
+        warnings.warn("ns_steps is deprecated; use steps instead", DeprecationWarning, stacklevel=3)
+    resolved = steps if steps is not None else ns_steps if ns_steps is not None else 5
+    if not isinstance(resolved, int) or resolved < 1:
+        raise ValueError(f"steps must be a positive integer, got {resolved}")
+    return resolved
+
+
+def _validate_polar_method(polar_method: str) -> PolarMethod:
+    if polar_method not in ("polar_express", "newton_schulz"):
+        raise ValueError(f"polar_method must be 'polar_express' or 'newton_schulz', got {polar_method}")
+    return polar_method  # type: ignore[return-value]
+
+
+def _normalize_muon_param_group(group: Dict[str, Any], group_index: int, sort_params: bool = False) -> None:
+    if "ns_steps" in group:
+        warnings.warn("ns_steps is deprecated; use steps instead", DeprecationWarning, stacklevel=3)
+        if "steps" not in group:
+            group["steps"] = group.pop("ns_steps")
+        else:
+            group.pop("ns_steps")
+
+    if sort_params:
+        group["params"] = sorted(group["params"], key=lambda x: x.size(), reverse=True)
+
+    group["lr"] = group.get("lr", 0.02)
+    group["momentum"] = group.get("momentum", 0.95)
+    group["weight_decay"] = group.get("weight_decay", 0)
+    group["steps"] = group.get("steps", 5)
+    group["polar_method"] = _validate_polar_method(group.get("polar_method", "polar_express"))
+    group["compute_dtype"] = group.get("compute_dtype", torch.bfloat16)
+    group["nesterov"] = group.get("nesterov", False)
+
+    if not isinstance(group["steps"], int) or group["steps"] < 1:
+        raise ValueError(f"steps must be a positive integer, got {group['steps']}")
+
+    if set(group.keys()) != MUON_PARAM_GROUP_KEYS:
+        raise ValueError(f"Muon parameter group {group_index} must contain exactly: {set(MUON_PARAM_GROUP_KEYS)}")
+
+
+def _muon_defaults(
+    lr: float = 0.02,
+    weight_decay: float = 0,
+    momentum: float = 0.95,
+    steps: Optional[int] = None,
+    ns_steps: Optional[int] = None,
+    polar_method: PolarMethod = "polar_express",
+    compute_dtype: torch.dtype = torch.bfloat16,
+    nesterov: bool = False,
+) -> Dict[str, Any]:
+    resolved_steps = _resolve_steps(steps=steps, ns_steps=ns_steps)
+    _validate_polar_method(polar_method)
+    return dict(
+        lr=lr,
+        weight_decay=weight_decay,
+        momentum=momentum,
+        steps=resolved_steps,
+        polar_method=polar_method,
+        compute_dtype=compute_dtype,
+        nesterov=nesterov,
+    )
+
+
+@torch.no_grad()
+def polar_express(
+    G: Tensor,
+    steps: int = 5,
+    eps: float = 1e-7,
+    compute_dtype: torch.dtype = torch.bfloat16,
+) -> Tensor:
+    """
+    Approximate polar(G) using Polar Express degree-5 polynomial iterations.
+
+    Args:
+        G: Tensor with shape (..., m, n). The last two dims are treated as a matrix.
+        steps: Number of polynomial iterations. Paper recommends 5 or 6 for Muon.
+        eps: Normalization epsilon.
+        compute_dtype: Usually torch.bfloat16 on GPU hardware.
+
+    Returns:
+        Approximation to polar(G), same shape as G, cast back to G's dtype.
+    """
+    if G.ndim < 2:
+        raise ValueError(f"Polar Express requires tensors with at least 2 dimensions, got {G.ndim}")
+
+    original_dtype = G.dtype
+    transposed = G.size(-2) > G.size(-1)
+
+    X = G.to(compute_dtype)
+
+    if transposed:
+        X = X.mT
+
+    X = X / (X.norm(dim=(-2, -1), keepdim=True) * 1.01 + eps)
+
+    coeffs = _POLAR_EXPRESS_COEFFS[:steps]
+    if steps > len(_POLAR_EXPRESS_COEFFS):
+        coeffs = coeffs + list(repeat(_POLAR_EXPRESS_COEFFS[-1], steps - len(_POLAR_EXPRESS_COEFFS)))
+
+    for a, b, c in coeffs:
+        A = X @ X.mT
+        B = b * A + c * (A @ A)
+        X = a * X + B @ X
+
+    if transposed:
+        X = X.mT
+
+    out: Tensor = X.to(dtype=original_dtype)
+    return out
 
 
 def zeropower_via_newtonschulz5(G: Tensor, steps: int) -> Tensor:
@@ -94,24 +264,27 @@ def muon_update(
     grad: Tensor,
     momentum: Tensor,
     beta: float = 0.95,
-    ns_steps: int = 5,
-    nesterov: bool = True,
+    steps: int = 5,
+    ns_steps: Optional[int] = None,
+    nesterov: bool = False,
+    polar_method: PolarMethod = "polar_express",
+    compute_dtype: torch.dtype = torch.bfloat16,
 ) -> Tensor:
     """
     Perform a Muon update step combining momentum and orthogonalization.
 
-    This function implements the core Muon update algorithm:
-    1. Update momentum buffer using exponential moving average
-    2. Apply Nesterov momentum if enabled
-    3. Orthogonalize the update using Newton-Schulz iteration
-    4. Scale the update based on matrix dimensions
+    By default uses Polar Express to approximate polar(M_t) on the momentum buffer.
+    Set polar_method="newton_schulz" for the legacy Jordan quintic Newton-Schulz path.
 
     Args:
         grad: Gradient tensor
         momentum: Momentum buffer tensor (will be modified in-place)
         beta: Momentum coefficient (default: 0.95)
-        ns_steps: Number of Newton-Schulz iteration steps (default: 5)
-        nesterov: Whether to use Nesterov momentum (default: True)
+        steps: Number of polar iteration steps (default: 5)
+        ns_steps: Deprecated alias for steps
+        nesterov: Whether to use Nesterov momentum (legacy newton_schulz path only)
+        polar_method: "polar_express" (default) or "newton_schulz"
+        compute_dtype: Dtype for polar_express computation (default: bfloat16)
 
     Returns:
         Orthogonalized update tensor
@@ -120,32 +293,33 @@ def muon_update(
         For convolutional filters (4D tensors), the tensor is reshaped to 2D
         before orthogonalization and then reshaped back.
     """
-    # Update momentum buffer
-    momentum.lerp_(grad, 1 - beta)
+    resolved_steps = _resolve_steps(steps=steps, ns_steps=ns_steps)
+    _validate_polar_method(polar_method)
 
-    # Apply Nesterov momentum if enabled
-    if nesterov:
-        update = grad.lerp_(momentum, beta)
-    else:
+    if polar_method == "polar_express":
+        momentum.mul_(beta).add_(grad, alpha=1.0 - beta)
         update = momentum
+    else:
+        momentum.lerp_(grad, 1 - beta)
+        if nesterov:
+            update = grad.lerp_(momentum, beta)
+        else:
+            update = momentum
 
-    # Handle 1D parameters (like biases) - skip orthogonalization
     if update.ndim == 1:
         return update
 
-    # Handle convolutional filters by reshaping to 2D
     original_shape = update.shape
     if update.ndim == 4:
         update = update.view(len(update), -1)
 
-    # Orthogonalize the update
-    update = zeropower_via_newtonschulz5(update, steps=ns_steps)
+    if polar_method == "polar_express":
+        update = polar_express(update, steps=resolved_steps, compute_dtype=compute_dtype)
+    else:
+        update = zeropower_via_newtonschulz5(update, steps=resolved_steps)
+        scale_factor = max(1, grad.size(-2) / grad.size(-1)) ** 0.5
+        update *= scale_factor
 
-    # Scale based on matrix dimensions
-    scale_factor = max(1, grad.size(-2) / grad.size(-1)) ** 0.5
-    update *= scale_factor
-
-    # Reshape back to original shape if needed
     if len(original_shape) == 4:
         update = update.view(original_shape)
 
@@ -191,13 +365,23 @@ def adam_update(
     return buf1c / (buf2c.sqrt() + eps)
 
 
+def _muon_update_kwargs(group: Dict[str, Any]) -> Dict[str, Any]:
+    return dict(
+        beta=group["momentum"],
+        steps=group["steps"],
+        nesterov=group["nesterov"],
+        polar_method=group["polar_method"],
+        compute_dtype=group["compute_dtype"],
+    )
+
+
 class Muon(Optimizer):
     """
     Muon optimizer - MomentUm Orthogonalized by Newton-schulz.
 
     Muon combines standard SGD-momentum with an orthogonalization post-processing step.
     Each 2D parameter's update is replaced with the nearest orthogonal matrix using
-    efficient Newton-Schulz iteration.
+    Polar Express (default) or legacy Newton-Schulz iteration.
 
     This optimizer is designed for hidden weight layers in neural networks. For best results:
     - Use Muon for hidden matrix weights (2D+ parameters)
@@ -210,7 +394,11 @@ class Muon(Optimizer):
         lr: Learning rate in units of spectral norm per update (default: 0.02)
         weight_decay: AdamW-style weight decay coefficient (default: 0)
         momentum: Momentum coefficient (default: 0.95)
-        ns_steps: Number of Newton-Schulz iteration steps (default: 5)
+        steps: Number of polar iteration steps (default: 5)
+        ns_steps: Deprecated alias for steps
+        polar_method: "polar_express" (default) or "newton_schulz"
+        compute_dtype: Dtype for polar_express computation (default: bfloat16)
+        nesterov: Use Nesterov momentum (legacy newton_schulz path only, default: False)
 
     Example:
         >>> model = MyModel()
@@ -232,7 +420,11 @@ class Muon(Optimizer):
         lr: float = 0.02,
         weight_decay: float = 0,
         momentum: float = 0.95,
-        ns_steps: int = 5,
+        steps: Optional[int] = None,
+        ns_steps: Optional[int] = None,
+        polar_method: PolarMethod = "polar_express",
+        compute_dtype: torch.dtype = torch.bfloat16,
+        nesterov: bool = False,
     ):
         if not isinstance(lr, (int, float)) or lr < 0:
             raise ValueError(f"Learning rate must be a non-negative number, got {lr}")
@@ -240,10 +432,17 @@ class Muon(Optimizer):
             raise ValueError(f"Weight decay must be a non-negative number, got {weight_decay}")
         if not isinstance(momentum, (int, float)) or not 0 <= momentum < 1:
             raise ValueError(f"Momentum must be in [0, 1), got {momentum}")
-        if not isinstance(ns_steps, int) or ns_steps < 1:
-            raise ValueError(f"ns_steps must be a positive integer, got {ns_steps}")
 
-        defaults = dict(lr=lr, weight_decay=weight_decay, momentum=momentum, ns_steps=ns_steps)
+        defaults = _muon_defaults(
+            lr=lr,
+            weight_decay=weight_decay,
+            momentum=momentum,
+            steps=steps,
+            ns_steps=ns_steps,
+            polar_method=polar_method,
+            compute_dtype=compute_dtype,
+            nesterov=nesterov,
+        )
 
         # Convert to list if it's an iterable
         if not isinstance(params, list):
@@ -311,8 +510,7 @@ class Muon(Optimizer):
                         update = muon_update(
                             p.grad,
                             state["momentum_buffer"],
-                            beta=group["momentum"],
-                            ns_steps=group["ns_steps"],
+                            **_muon_update_kwargs(group),
                         )
 
                         # Apply weight decay and update
@@ -337,8 +535,7 @@ class Muon(Optimizer):
                     update = muon_update(
                         p.grad,
                         state["momentum_buffer"],
-                        beta=group["momentum"],
-                        ns_steps=group["ns_steps"],
+                        **_muon_update_kwargs(group),
                     )
 
                     p.mul_(1 - group["lr"] * group["weight_decay"])
@@ -360,7 +557,11 @@ class SingleDeviceMuon(Optimizer):
         lr: Learning rate in units of spectral norm per update (default: 0.02)
         weight_decay: AdamW-style weight decay coefficient (default: 0)
         momentum: Momentum coefficient (default: 0.95)
-        ns_steps: Number of Newton-Schulz iteration steps (default: 5)
+        steps: Number of polar iteration steps (default: 5)
+        ns_steps: Deprecated alias for steps
+        polar_method: "polar_express" (default) or "newton_schulz"
+        compute_dtype: Dtype for polar_express computation (default: bfloat16)
+        nesterov: Use Nesterov momentum (legacy newton_schulz path only, default: False)
 
     Example:
         >>> model = MyModel()
@@ -378,7 +579,11 @@ class SingleDeviceMuon(Optimizer):
         lr: float = 0.02,
         weight_decay: float = 0,
         momentum: float = 0.95,
-        ns_steps: int = 5,
+        steps: Optional[int] = None,
+        ns_steps: Optional[int] = None,
+        polar_method: PolarMethod = "polar_express",
+        compute_dtype: torch.dtype = torch.bfloat16,
+        nesterov: bool = False,
     ):
         if not isinstance(lr, (int, float)) or lr < 0:
             raise ValueError(f"Learning rate must be a non-negative number, got {lr}")
@@ -386,10 +591,17 @@ class SingleDeviceMuon(Optimizer):
             raise ValueError(f"Weight decay must be a non-negative number, got {weight_decay}")
         if not isinstance(momentum, (int, float)) or not 0 <= momentum < 1:
             raise ValueError(f"Momentum must be in [0, 1), got {momentum}")
-        if not isinstance(ns_steps, int) or ns_steps < 1:
-            raise ValueError(f"ns_steps must be a positive integer, got {ns_steps}")
 
-        defaults = dict(lr=lr, weight_decay=weight_decay, momentum=momentum, ns_steps=ns_steps)
+        defaults = _muon_defaults(
+            lr=lr,
+            weight_decay=weight_decay,
+            momentum=momentum,
+            steps=steps,
+            ns_steps=ns_steps,
+            polar_method=polar_method,
+            compute_dtype=compute_dtype,
+            nesterov=nesterov,
+        )
         super().__init__(params, defaults)
 
         logger.info(f"Initialized SingleDeviceMuon optimizer with {len(list(params))} parameters")
@@ -422,8 +634,7 @@ class SingleDeviceMuon(Optimizer):
                 update = muon_update(
                     p.grad,
                     state["momentum_buffer"],
-                    beta=group["momentum"],
-                    ns_steps=group["ns_steps"],
+                    **_muon_update_kwargs(group),
                 )
 
                 p.mul_(1 - group["lr"] * group["weight_decay"])
@@ -480,23 +691,7 @@ class MuonWithAuxAdam(Optimizer):
                 raise ValueError(f"Parameter group {i} must contain 'params' key")
 
             if group["use_muon"]:
-                # Muon-specific validation and defaults
-                group["params"] = sorted(group["params"], key=lambda x: x.size(), reverse=True)
-                group["lr"] = group.get("lr", 0.02)
-                group["momentum"] = group.get("momentum", 0.95)
-                group["weight_decay"] = group.get("weight_decay", 0)
-                group["ns_steps"] = group.get("ns_steps", 5)
-
-                expected_keys = {
-                    "params",
-                    "lr",
-                    "momentum",
-                    "weight_decay",
-                    "ns_steps",
-                    "use_muon",
-                }
-                if set(group.keys()) != expected_keys:
-                    raise ValueError(f"Muon parameter group {i} must contain exactly: {expected_keys}")
+                _normalize_muon_param_group(group, i, sort_params=True)
             else:
                 # AdamW-specific validation and defaults
                 group["lr"] = group.get("lr", 3e-4)
@@ -565,8 +760,7 @@ class MuonWithAuxAdam(Optimizer):
                             update = muon_update(
                                 p.grad,
                                 state["momentum_buffer"],
-                                beta=group["momentum"],
-                                ns_steps=group["ns_steps"],
+                                **_muon_update_kwargs(group),
                             )
 
                             p.mul_(1 - group["lr"] * group["weight_decay"])
@@ -589,8 +783,7 @@ class MuonWithAuxAdam(Optimizer):
                         update = muon_update(
                             p.grad,
                             state["momentum_buffer"],
-                            beta=group["momentum"],
-                            ns_steps=group["ns_steps"],
+                            **_muon_update_kwargs(group),
                         )
 
                         p.mul_(1 - group["lr"] * group["weight_decay"])
@@ -657,22 +850,7 @@ class SingleDeviceMuonWithAuxAdam(Optimizer):
                 raise ValueError(f"Parameter group {i} must contain 'params' key")
 
             if group["use_muon"]:
-                # Muon-specific validation and defaults
-                group["lr"] = group.get("lr", 0.02)
-                group["momentum"] = group.get("momentum", 0.95)
-                group["weight_decay"] = group.get("weight_decay", 0)
-                group["ns_steps"] = group.get("ns_steps", 5)
-
-                expected_keys = {
-                    "params",
-                    "lr",
-                    "momentum",
-                    "weight_decay",
-                    "ns_steps",
-                    "use_muon",
-                }
-                if set(group.keys()) != expected_keys:
-                    raise ValueError(f"Muon parameter group {i} must contain exactly: {expected_keys}")
+                _normalize_muon_param_group(group, i, sort_params=False)
             else:
                 # AdamW-specific validation and defaults
                 group["lr"] = group.get("lr", 3e-4)
@@ -730,8 +908,7 @@ class SingleDeviceMuonWithAuxAdam(Optimizer):
                     update = muon_update(
                         p.grad,
                         state["momentum_buffer"],
-                        beta=group["momentum"],
-                        ns_steps=group["ns_steps"],
+                        **_muon_update_kwargs(group),
                     )
 
                     p.mul_(1 - group["lr"] * group["weight_decay"])
@@ -770,7 +947,11 @@ def create_muon_param_groups(
     muon_lr: float = 0.02,
     adam_lr: float = 3e-4,
     muon_momentum: float = 0.95,
-    muon_ns_steps: int = 5,
+    muon_steps: Optional[int] = None,
+    muon_ns_steps: Optional[int] = None,
+    polar_method: PolarMethod = "polar_express",
+    compute_dtype: torch.dtype = torch.bfloat16,
+    nesterov: bool = False,
     adam_betas: Tuple[float, float] = (0.9, 0.95),
     weight_decay: float = 0,
     eps: float = 1e-10,
@@ -786,7 +967,11 @@ def create_muon_param_groups(
         muon_lr: Learning rate for Muon parameters
         adam_lr: Learning rate for AdamW parameters
         muon_momentum: Momentum for Muon parameters
-        muon_ns_steps: Number of Newton-Schulz steps for Muon parameters
+        muon_steps: Number of polar iteration steps for Muon parameters
+        muon_ns_steps: Deprecated alias for muon_steps
+        polar_method: Polar approximation method for Muon parameters
+        compute_dtype: Dtype for polar_express computation
+        nesterov: Use Nesterov momentum (legacy newton_schulz path only)
         adam_betas: Beta parameters for AdamW
         weight_decay: Weight decay coefficient
         eps: Epsilon for AdamW numerical stability
@@ -799,28 +984,36 @@ def create_muon_param_groups(
         >>> param_groups = create_muon_param_groups(model)
         >>> optimizer = MuonWithAuxAdam(param_groups)
     """
-    # Separate parameters by type
+    resolved_steps = _resolve_steps(steps=muon_steps, ns_steps=muon_ns_steps)
+    _validate_polar_method(polar_method)
+
     muon_params = []
     adam_params = []
 
     for name, param in model.named_parameters():
-        if param.ndim >= 2 and "embed" not in name and "head" not in name:
-            muon_params.append(param)
-        else:
-            adam_params.append(param)
+        if not param.requires_grad:
+            continue
 
-    # Create parameter groups
+        name_lower = name.lower()
+        use_adamw = param.ndim < 2 or any(fragment in name_lower for fragment in ADAMW_NAME_FRAGMENTS)
+
+        if use_adamw:
+            adam_params.append(param)
+        else:
+            muon_params.append(param)
+
     param_groups = [
-        # Muon group
         {
             "params": muon_params,
             "lr": muon_lr,
             "momentum": muon_momentum,
             "weight_decay": weight_decay,
-            "ns_steps": muon_ns_steps,
+            "steps": resolved_steps,
+            "polar_method": polar_method,
+            "compute_dtype": compute_dtype,
+            "nesterov": nesterov,
             "use_muon": True,
         },
-        # AdamW group
         {
             "params": adam_params,
             "lr": adam_lr,
@@ -848,6 +1041,7 @@ __all__ = [
     "MuonWithAuxAdam",
     "SingleDeviceMuonWithAuxAdam",
     "create_muon_param_groups",
+    "polar_express",
     "zeropower_via_newtonschulz5",
     "muon_update",
     "adam_update",

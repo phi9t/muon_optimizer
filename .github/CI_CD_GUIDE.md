@@ -21,20 +21,7 @@ This guide provides comprehensive documentation for the CI/CD pipeline configura
 - Example validation with timeout protection
 - Multi-Python version compatibility testing
 
-### 2. Release Automation (`.github/workflows/release.yml`)
-**Triggers**: Git tags (v*) and GitHub releases
-
-**Process**:
-1. **Pre-release Testing**: Full test suite validation
-2. **Version Consistency**: Verify tag matches module version
-3. **Package Building**: Create wheel and source distributions
-4. **Test PyPI**: Upload to test PyPI for validation
-5. **Production Release**: Publish to PyPI on GitHub release
-6. **Post-release**: Verification and documentation updates
-
-**Security**: Uses trusted publishing (OIDC) for PyPI uploads
-
-### 3. Dependency Management (`.github/workflows/dependencies.yml`)
+### 2. Dependency Management (`.github/workflows/dependencies.yml`)
 **Triggers**: Weekly schedule, manual dispatch
 
 **Features**:
@@ -72,7 +59,6 @@ Complete development workflow documentation including:
 - Testing procedures
 - Code quality requirements
 - Contribution guidelines
-- Release process documentation
 
 ## 📊 Quality Gates
 
@@ -97,27 +83,9 @@ All PRs must pass:
 - No hardcoded secrets or credentials
 - Regular security audits via scheduled workflows
 
-## 🚀 Deployment Pipeline
+## 📦 Package build check
 
-### Staging (Test PyPI)
-1. Triggered on version tags (`v*`)
-2. Full test suite execution
-3. Package building and validation
-4. Upload to test.pypi.org
-5. Installation testing from test PyPI
-
-### Production (PyPI)
-1. Triggered on GitHub releases
-2. Inherits all staging validations
-3. Upload to pypi.org using trusted publishing
-4. Automatic GitHub release asset creation
-5. Post-deployment verification
-
-### Version Management
-- Semantic versioning (MAJOR.MINOR.PATCH)
-- Automatic version consistency validation
-- Git tag-based release triggers
-- Changelog automation
+The CI **build** job runs `uv build` and `twine check` to verify the project still packages correctly. This repo is not published to PyPI; the check is only for installability validation.
 
 ## 📈 Monitoring and Observability
 
@@ -131,7 +99,6 @@ All PRs must pass:
 - Failed builds → GitHub notifications
 - Security vulnerabilities → Automated issues
 - Dependency updates → PR notifications
-- Release status → Release notes
 
 ## 🛠️ Local Development
 
@@ -142,16 +109,17 @@ git clone <repository>
 cd muon_optimizer
 
 # Install development dependencies
-pip install -e .[dev]
+uv sync
 
 # Install pre-commit hooks
-pre-commit install
+uv run pre-commit install
 
 # Run tests
-pytest -v
+uv run pytest muon_optimizer_test.py -v
+uv run pytest example_usage_test.py -m "not slow" -v
 
 # Check code quality
-pre-commit run --all-files
+uv run pre-commit run --all-files
 ```
 
 ### IDE Integration

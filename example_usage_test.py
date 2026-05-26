@@ -182,6 +182,7 @@ class TestTableFunctions:
         assert mock_console.return_value.print.call_count == 1
 
 
+@pytest.mark.slow
 class TestOptimizationExamples:
     """Test the optimization examples."""
     
@@ -357,7 +358,8 @@ class TestParameterGrouping:
 
 class TestIntegration:
     """Integration tests."""
-    
+
+    @pytest.mark.slow
     @patch('example_usage.rich_console')
     @patch('example_usage.log')
     def test_run_all_examples_mock(self, mock_log, mock_console):
@@ -451,6 +453,7 @@ class TestErrorHandling:
         assert len(muon_group["params"]) == 0
         assert len(adam_group["params"]) == 0
     
+    @pytest.mark.slow
     def test_small_batch_training(self):
         """Test training with very small batches."""
         model = SimpleNet(input_size=5, hidden_size=8, num_classes=2)
@@ -489,7 +492,8 @@ class TestErrorHandling:
 
 class TestMetricsStructure:
     """Test the structure of training metrics returned by functions."""
-    
+
+    @pytest.mark.slow
     def test_training_metrics_structure(self):
         """Test that training metrics have the expected structure."""
         model = SimpleNet(input_size=10, hidden_size=5, num_classes=2)
@@ -513,6 +517,7 @@ class TestMetricsStructure:
             assert metric['accuracy'] <= 100.0
             assert metric['time'] > 0.0
     
+    @pytest.mark.slow
     @patch('example_usage.rich_console')
     @patch('example_usage.log')
     def test_scheduler_metrics_structure(self, mock_log, mock_console):

@@ -24,15 +24,35 @@ Muon is an optimizer that combines standard SGD-momentum with an orthogonalizati
 
 ## Installation
 
+This project uses [uv](https://docs.astral.sh/uv/) and installs **CPU-only PyTorch** by default.
+
 ```bash
-# Install dependencies
-pip install torch>=2.7.1 numpy rich
+# Install uv (once)
+curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# For benchmarking and visualization
-pip install matplotlib plotly seaborn dash dash-bootstrap-components
+# Clone and set up the project
+git clone https://github.com/phi9t/muon_optimizer.git
+cd muon_optimizer
+uv sync
+```
 
-# Development install
-pip install -e .
+For benchmarks and visualization:
+
+```bash
+uv sync --group benchmarking
+```
+
+For pip without uv:
+
+```bash
+pip install torch>=2.7.1 --index-url https://download.pytorch.org/whl/cpu
+pip install -e ".[dev]"
+```
+
+For example scripts that use Rich tables, install the optional extra:
+
+```bash
+pip install -e ".[examples]"
 ```
 
 ## Quick Start
@@ -121,7 +141,7 @@ optimizer = SingleDeviceMuonWithAuxAdam(param_groups)
 ### Run the Quadratic Optimization Demo
 
 ```bash
-python minimalist_quadratic_optimization.py
+uv run python minimalist_quadratic_optimization.py
 ```
 
 This example demonstrates Muon optimization on simple 2D quadratic functions with visualization.
@@ -129,7 +149,8 @@ This example demonstrates Muon optimization on simple 2D quadratic functions wit
 ### Run the MNIST Benchmark
 
 ```bash
-python mnist_optimizer_benchmark.py
+uv sync --group benchmarking
+uv run python mnist_optimizer_benchmark.py
 ```
 
 This comprehensive benchmark compares Muon against SGD and Adam optimizers on MNIST classification using a CNN.
@@ -215,14 +236,17 @@ Perform a single Adam update step.
 ## Testing
 
 ```bash
-# Run all tests
-python -m pytest muon_optimizer_test.py -v
+# Core tests
+uv run pytest muon_optimizer_test.py -v
 
-# Run specific test class
-python -m pytest muon_optimizer_test.py::TestMuonOptimizer -v
+# Fast example tests (CI default)
+uv run pytest example_usage_test.py -m "not slow" -v
+
+# Full example integration tests (slower)
+uv run pytest example_usage_test.py -m slow -v
 
 # Run with coverage
-python -m pytest muon_optimizer_test.py --cov=muon_optimizer
+uv run pytest muon_optimizer_test.py --cov=muon_optimizer
 ```
 
 ## Development
@@ -230,17 +254,10 @@ python -m pytest muon_optimizer_test.py --cov=muon_optimizer
 ### Code Quality Tools
 
 ```bash
-# Format code
-black muon_optimizer.py
-
-# Sort imports
-isort muon_optimizer.py
-
-# Check linting
-flake8 muon_optimizer.py
-
-# Type checking
-mypy muon_optimizer.py
+uv run black muon_optimizer.py
+uv run isort muon_optimizer.py
+uv run flake8 muon_optimizer.py
+uv run mypy muon_optimizer.py
 ```
 
 ## Architecture Notes
@@ -253,7 +270,7 @@ mypy muon_optimizer.py
 
 ## Known Limitations
 
-- Requires PyTorch >= 2.7.1 and Python >= 3.13
+- Requires PyTorch >= 2.7.1 and Python >= 3.11
 - Orthogonalization only applies to 2D+ parameters
 - Distributed mode requires proper `torch.distributed` initialization
 - Performance not extensively benchmarked on large-scale models

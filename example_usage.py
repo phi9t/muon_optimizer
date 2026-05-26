@@ -236,7 +236,10 @@ def create_optimizer_config_table(optimizer) -> None:
             lr = group["lr"]
 
             if group["use_muon"]:
-                config = f"momentum={group['momentum']}, ns_steps={group.get('ns_steps', 5)}"
+                config = (
+                    f"momentum={group['momentum']}, steps={group.get('steps', 5)}, "
+                    f"polar={group.get('polar_method', 'polar_express')}"
+                )
             else:
                 config = f"betas={group.get('betas', 'N/A')}, eps={group.get('eps', 'N/A')}"
         else:
@@ -244,7 +247,10 @@ def create_optimizer_config_table(optimizer) -> None:
             opt_type = "Muon"
             num_params = len(group["params"])
             lr = group["lr"]
-            config = f"momentum={group['momentum']}, ns_steps={group.get('ns_steps', 5)}"
+            config = (
+                f"momentum={group['momentum']}, steps={group.get('steps', 5)}, "
+                f"polar={group.get('polar_method', 'polar_express')}"
+            )
 
         table.add_row(
             str(i + 1),
@@ -384,7 +390,10 @@ def example_3_manual_parameter_grouping():
             "lr": 0.02,
             "momentum": 0.95,
             "weight_decay": 0.01,
-            "ns_steps": 5,
+            "steps": 5,
+            "polar_method": "polar_express",
+            "compute_dtype": torch.bfloat16,
+            "nesterov": False,
             "use_muon": True,
         },
         # AdamW for scalar parameters

@@ -19,14 +19,63 @@ from unittest.mock import patch, MagicMock
 
 from muon_optimizer import (
     zeropower_via_newtonschulz5,
+    polar_express,
     muon_update,
     adam_update,
     Muon,
     SingleDeviceMuon,
     MuonWithAuxAdam,
     SingleDeviceMuonWithAuxAdam,
-    create_muon_param_groups
+    create_muon_param_groups,
 )
+
+
+class TestPolarExpress:
+    """Test the Polar Express matrix-sign function."""
+
+    def test_basic_orthogonalization(self):
+        torch.manual_seed(42)
+        G = torch.randn(4, 4)
+        result = polar_express(G, steps=5)
+
+        assert result.shape == G.shape
+        assert result.dtype == G.dtype
+
+        result_f32 = result.float()
+        orthogonal_check = torch.mm(result_f32, result_f32.T)
+        identity = torch.eye(4).float()
+        assert torch.allclose(orthogonal_check, identity, atol=0.5)
+
+    def test_rectangular_matrix(self):
+        G_tall = torch.randn(6, 4)
+        result_tall = polar_express(G_tall, steps=5)
+        assert result_tall.shape == G_tall.shape
+
+        G_wide = torch.randn(4, 6)
+        result_wide = polar_express(G_wide, steps=5)
+        assert result_wide.shape == G_wide.shape
+
+    def test_batch_processing(self):
+        G_batch = torch.randn(3, 4, 4)
+        result = polar_express(G_batch, steps=5)
+        assert result.shape == G_batch.shape
+
+        result_f32 = result.float()
+        for i in range(3):
+            orthogonal_check = torch.mm(result_f32[i], result_f32[i].T)
+            diag_diff = torch.abs(torch.diag(orthogonal_check) - 1.0)
+            assert torch.all(diag_diff < 0.8)
+
+    def test_invalid_dimensions(self):
+        G_1d = torch.randn(10)
+        with pytest.raises(ValueError, match="Polar Express requires tensors with at least 2 dimensions"):
+            polar_express(G_1d, steps=5)
+
+    def test_steps_beyond_coefficients(self):
+        G = torch.randn(4, 4)
+        result = polar_express(G, steps=10)
+        assert result.shape == G.shape
+        assert torch.all(torch.isfinite(result))
 
 
 class TestZeropowerViaNewtonschulz5:
@@ -123,10 +172,10 @@ class TestMuonUpdate:
         grad = torch.randn(4, 4)
         momentum = torch.zeros_like(grad)
         
-        update = muon_update(grad, momentum, beta=0.95, ns_steps=5, nesterov=True)
-        
+        update = muon_update(grad, momentum, beta=0.95, steps=5)
+
         assert update.shape == grad.shape
-        assert not torch.allclose(momentum, torch.zeros_like(grad))  # Momentum should be updated
+        assert not torch.allclose(momentum, torch.zeros_like(grad))
     
     def test_1d_parameters(self):
         """Test that 1D parameters (like biases) skip orthogonalization."""
@@ -136,17 +185,16 @@ class TestMuonUpdate:
         update = muon_update(grad_1d, momentum_1d, beta=0.95)
         
         assert update.shape == grad_1d.shape
-        # For 1D parameters, just check that we get a reasonable update
-        # and that momentum buffer was modified
         assert not torch.allclose(momentum_1d, torch.zeros_like(grad_1d))
-        assert torch.allclose(update, grad_1d, atol=1e-6)  # update should be the modified grad
+        expected = grad_1d * (1 - 0.95)
+        assert torch.allclose(update, expected, atol=1e-6)
     
     def test_4d_conv_parameters(self):
         """Test handling of 4D convolutional parameters."""
         grad_4d = torch.randn(32, 16, 3, 3)  # Conv layer shape
         momentum_4d = torch.zeros_like(grad_4d)
         
-        update = muon_update(grad_4d, momentum_4d, beta=0.95, ns_steps=5)
+        update = muon_update(grad_4d, momentum_4d, beta=0.95, steps=5)
         
         assert update.shape == grad_4d.shape
     
@@ -166,16 +214,41 @@ class TestMuonUpdate:
         assert not torch.allclose(momentum_after_1, momentum)
     
     def test_nesterov_effect(self):
-        """Test the effect of Nesterov momentum."""
+        """Test the effect of Nesterov momentum on the legacy Newton-Schulz path."""
         grad = torch.randn(4, 4)
         momentum_nesterov = torch.zeros_like(grad)
         momentum_standard = torch.zeros_like(grad)
-        
-        update_nesterov = muon_update(grad, momentum_nesterov, beta=0.95, nesterov=True)
-        update_standard = muon_update(grad, momentum_standard, beta=0.95, nesterov=False)
-        
-        # Updates should be different when Nesterov is enabled vs disabled
+
+        update_nesterov = muon_update(
+            grad.clone(),
+            momentum_nesterov,
+            beta=0.95,
+            nesterov=True,
+            polar_method="newton_schulz",
+        )
+        update_standard = muon_update(
+            grad.clone(),
+            momentum_standard,
+            beta=0.95,
+            nesterov=False,
+            polar_method="newton_schulz",
+        )
+
         assert not torch.allclose(update_nesterov, update_standard)
+
+    def test_legacy_newton_schulz_path(self):
+        grad = torch.randn(4, 4)
+        momentum = torch.zeros_like(grad)
+        update = muon_update(
+            grad,
+            momentum,
+            beta=0.95,
+            steps=5,
+            polar_method="newton_schulz",
+            nesterov=True,
+        )
+        assert update.shape == grad.shape
+        assert update.dtype == torch.bfloat16
 
 
 class TestAdamUpdate:
@@ -238,7 +311,8 @@ class TestMuonOptimizer:
         assert optimizer.param_groups[0]['lr'] == 0.02
         assert optimizer.param_groups[0]['momentum'] == 0.95
         assert optimizer.param_groups[0]['weight_decay'] == 0.01
-        assert optimizer.param_groups[0]['ns_steps'] == 5
+        assert optimizer.param_groups[0]['steps'] == 5
+        assert optimizer.param_groups[0]['polar_method'] == 'polar_express'
     
     def test_invalid_parameters(self):
         """Test error handling for invalid parameters."""
@@ -253,8 +327,14 @@ class TestMuonOptimizer:
         with pytest.raises(ValueError, match="Momentum must be in"):
             Muon(params, momentum=1.5)
         
-        with pytest.raises(ValueError, match="ns_steps must be a positive integer"):
-            Muon(params, ns_steps=0)
+        with pytest.raises(ValueError, match="steps must be a positive integer"):
+            Muon(params, steps=0)
+
+    def test_ns_steps_alias(self):
+        params = [torch.randn(10, 10, requires_grad=True)]
+        with pytest.warns(DeprecationWarning, match="ns_steps is deprecated"):
+            optimizer = Muon(params, ns_steps=6)
+        assert optimizer.param_groups[0]['steps'] == 6
     
     def test_empty_params(self):
         """Test error handling for empty parameter list."""
@@ -554,6 +634,34 @@ class TestCreateMuonParamGroups:
         assert param_groups[1]["lr"] == 1e-3  # Adam group
         assert param_groups[0]["weight_decay"] == 0.01
         assert param_groups[1]["weight_decay"] == 0.01
+        assert param_groups[0]["steps"] == 5
+        assert param_groups[0]["polar_method"] == "polar_express"
+
+    def test_name_fragment_routing(self):
+        class GPTStyleModel(nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.wte = nn.Embedding(100, 32)
+                self.wpe = nn.Embedding(128, 32)
+                self.ln_1 = nn.LayerNorm(32)
+                self.attn_weight = nn.Parameter(torch.randn(32, 32))
+                self.bias = nn.Parameter(torch.randn(32))
+                self.lm_head = nn.Linear(32, 100, bias=False)
+
+            def forward(self, x):
+                return x
+
+        model = GPTStyleModel()
+        param_groups = create_muon_param_groups(model)
+        muon_params = param_groups[0]["params"]
+        adam_params = param_groups[1]["params"]
+
+        assert any(p is model.attn_weight for p in muon_params)
+        assert any(p is model.wte.weight for p in adam_params)
+        assert any(p is model.wpe.weight for p in adam_params)
+        assert any(p is model.ln_1.weight for p in adam_params)
+        assert any(p is model.bias for p in adam_params)
+        assert any(p is model.lm_head.weight for p in adam_params)
 
 
 class TestEdgeCases:

@@ -388,7 +388,7 @@ def main():
                 "lr": 0.005,
                 "momentum": 0.9,
                 "weight_decay": 1e-4,
-                "ns_steps": 3,
+                "steps": 5,
             },
         },
     ]

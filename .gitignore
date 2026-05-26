@@ -2,10 +2,18 @@
 .idea
 *.log
 tmp/
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+dist/
+*.egg-info/
 
 *.py[cod]
 *.egg
 build
-htmlcov
 
 data/

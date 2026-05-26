@@ -225,6 +225,149 @@ def _validate_vocab_sizes(
         )
 
 
+def _vocab_plan_payload(
+    shared_tokenizer: Any,
+    teacher_spec: QwenStreamedModelSpec,
+    student_spec: QwenStreamedModelSpec,
+) -> Dict[str, Any]:
+    tokenizer_vocab = int(len(shared_tokenizer))
+    issues: list[str] = []
+    if tokenizer_vocab != teacher_spec.vocab_size:
+        issues.append(
+            f"teacher spec vocab_size={teacher_spec.vocab_size} != tokenizer vocab_size={tokenizer_vocab}"
+        )
+    if tokenizer_vocab != student_spec.vocab_size:
+        issues.append(
+            f"student spec vocab_size={student_spec.vocab_size} != tokenizer vocab_size={tokenizer_vocab}"
+        )
+
+    return {
+        "tokenizer_vocab_size": tokenizer_vocab,
+        "teacher_vocab_size": teacher_spec.vocab_size,
+        "student_vocab_size": student_spec.vocab_size,
+        "compatible": len(issues) == 0,
+        "issues": issues,
+    }
+
+
+def _estimate_max_cache_bytes_for_model(
+    spec: QwenStreamedModelSpec,
+    prompt_lengths: List[int],
+    max_new_tokens: int,
+) -> int:
+    if not prompt_lengths:
+        return 0
+
+    max_prompt_tokens = max(prompt_lengths)
+    max_sequence_tokens = int(max_prompt_tokens) + int(max_new_tokens)
+    bytes_per_token_per_layer = 2 * spec.num_key_value_heads * spec.head_dim * 4
+    return int(spec.num_hidden_layers * bytes_per_token_per_layer * max_sequence_tokens)
+
+
+def _kv_cache_plan_payload(
+    student_spec: QwenStreamedModelSpec,
+    teacher_spec: QwenStreamedModelSpec,
+    prompt_lengths: List[int],
+    max_new_tokens: int,
+    kv_cache_dir: Path,
+) -> Dict[str, Any]:
+    prompt_count = len(prompt_lengths)
+    student_cache_bytes = _estimate_max_cache_bytes_for_model(student_spec, prompt_lengths, max_new_tokens)
+    teacher_cache_bytes = _estimate_max_cache_bytes_for_model(teacher_spec, prompt_lengths, max_new_tokens)
+    total_per_prompt_cache_bytes = student_cache_bytes + teacher_cache_bytes
+    total_run_cache_bytes = total_per_prompt_cache_bytes * max(int(prompt_count), 1)
+
+    return {
+        "kv_cache_dir": str(kv_cache_dir),
+        "prompt_count": prompt_count,
+        "max_prompt_tokens": max(prompt_lengths) if prompt_lengths else 0,
+        "generated_tokens_per_prompt": int(max_new_tokens),
+        "max_sequence_tokens_per_prompt": (max(prompt_lengths) + int(max_new_tokens))
+        if prompt_lengths
+        else int(max_new_tokens),
+        "per_model_max_kv_bytes": {
+            "student": student_cache_bytes,
+            "teacher": teacher_cache_bytes,
+        },
+        "max_kv_cache_bytes": total_per_prompt_cache_bytes,
+        "estimated_run_kv_bytes": total_run_cache_bytes,
+    }
+
+
+def _spec_plan_summary(spec: QwenStreamedModelSpec) -> Dict[str, Any]:
+    return {
+        "model_id": spec.model_id,
+        "local_dir": str(spec.local_dir),
+        "num_hidden_layers": spec.num_hidden_layers,
+        "hidden_size": spec.hidden_size,
+        "vocab_size": spec.vocab_size,
+        "num_attention_heads": spec.num_attention_heads,
+        "num_key_value_heads": spec.num_key_value_heads,
+        "head_dim": spec.head_dim,
+        "intermediate_size": spec.intermediate_size,
+        "rope_theta": spec.rope_theta,
+        "rms_norm_eps": spec.rms_norm_eps,
+        "tie_word_embeddings": spec.tie_word_embeddings,
+        "required_tensor_count": len(spec.required_tensor_names()),
+        "required_tensors": spec.required_tensor_names(),
+        "weight_files": sorted({str(path) for path in set(spec.weight_map.values())}),
+        "shard_count": len(set(str(path) for path in spec.weight_map.values())),
+    }
+
+
+def _describe_prompt_lengths(tokenizer: Any, prompts: List[str]) -> List[int]:
+    return [
+        int(
+            tokenizer(prompt, return_tensors="pt", add_special_tokens=True)["input_ids"].shape[1]
+        )
+        for prompt in prompts
+    ]
+
+
+def _run_dry_plan(args: Any, teacher_spec: QwenStreamedModelSpec, student_spec: QwenStreamedModelSpec, shared_tokenizer: Any, selected_prompts: List[str]) -> None:
+    prompt_lengths = _describe_prompt_lengths(shared_tokenizer, selected_prompts)
+    kv_plan = _kv_cache_plan_payload(
+        student_spec=student_spec,
+        teacher_spec=teacher_spec,
+        prompt_lengths=prompt_lengths,
+        max_new_tokens=int(args.max_new_tokens),
+        kv_cache_dir=Path(args.kv_cache_dir).resolve(),
+    )
+    cache = {
+        **kv_plan,
+        "memory_cap_gb": float(args.memory_cap_gb),
+        "cache_per_model_per_prompt_kv_gib": {
+            "student": kv_plan["per_model_max_kv_bytes"]["student"] / (1024**3),
+            "teacher": kv_plan["per_model_max_kv_bytes"]["teacher"] / (1024**3),
+        },
+        "max_run_kv_gib": kv_plan["estimated_run_kv_bytes"] / (1024**3),
+    }
+
+    payload = {
+        "mode": "streamed",
+        "dry_plan": True,
+        "student_model": _spec_plan_summary(student_spec),
+        "teacher_model": _spec_plan_summary(teacher_spec),
+        "vocab": _vocab_plan_payload(
+            shared_tokenizer=shared_tokenizer,
+            teacher_spec=teacher_spec,
+            student_spec=student_spec,
+        ),
+        "tokenizer": {
+            "name_or_path": getattr(shared_tokenizer, "name_or_path", "unknown"),
+            "vocab_size": int(len(shared_tokenizer)),
+            "eos_token_id": getattr(shared_tokenizer, "eos_token_id", None),
+            "prompt_count": len(selected_prompts),
+            "prompt_lengths": prompt_lengths,
+            "max_prompt_tokens": kv_plan["max_prompt_tokens"],
+            "generated_tokens_per_prompt": kv_plan["generated_tokens_per_prompt"],
+        },
+        "cache_and_memory": cache,
+    }
+
+    print(json.dumps(payload, indent=2))
+
+
 def _encode_prompt(tokenizer: Any, prompt: str) -> Dict[str, torch.Tensor]:
     tokenized = tokenizer(prompt, return_tensors="pt", add_special_tokens=True)
     return {
@@ -238,9 +381,6 @@ def _select_student_token(logits: torch.Tensor) -> int:
 
 
 def run_streamed_comparison(args: Any, prompts: List[str] | None = None) -> None:
-    if getattr(args, "dry_plan", False):
-        raise NotImplementedError("streamed Qwen comparison dry plan is not implemented yet")
-
     if int(getattr(args, "top_k", 0)) <= 0:
         raise ValueError("--top-k must be a positive integer.")
     if int(getattr(args, "limit_prompts", 0)) <= 0:
@@ -271,6 +411,17 @@ def run_streamed_comparison(args: Any, prompts: List[str] | None = None) -> None
     student_spec = QwenStreamedModelSpec.from_model_id(args.student_model)
     teacher_spec.validate_required_tensors()
     student_spec.validate_required_tensors()
+
+    if getattr(args, "dry_plan", False):
+        _run_dry_plan(
+            args=args,
+            teacher_spec=teacher_spec,
+            student_spec=student_spec,
+            shared_tokenizer=shared_tokenizer,
+            selected_prompts=selected_prompts,
+        )
+        return
+
     _validate_vocab_sizes(shared_tokenizer, teacher_spec, student_spec)
 
     logging.info(
@@ -309,6 +460,7 @@ def run_streamed_comparison(args: Any, prompts: List[str] | None = None) -> None
         "max_absolute_logit_delta": 0.0,
         "overlap_count": 0.0,
     }
+    generated_step_count = 0
     run_id = datetime.utcnow().strftime("run_%Y%m%dT%H%M%SZ")
     kv_root = Path(args.kv_cache_dir).resolve() / run_id
 
@@ -438,21 +590,33 @@ def run_streamed_comparison(args: Any, prompts: List[str] | None = None) -> None
             global_aggregate["mean_absolute_logit_delta"] += mean_abs_delta * prompt_len_f
             global_aggregate["max_absolute_logit_delta"] += mean_max_abs_delta * prompt_len_f
             global_aggregate["overlap_count"] += mean_overlap_count * prompt_len_f
+            generated_step_count += prompt_len_f
         gc.collect()
 
-    num_prompts = float(len(selected_prompts))
+    generated_step_count_float = float(generated_step_count)
     aggregate = {
         "prompt_count": len(selected_prompts),
-        "mean_kl_divergence": global_aggregate["kl_divergence"] / num_prompts if num_prompts else 0.0,
-        "mean_cosine_similarity": global_aggregate["cosine_similarity"] / num_prompts if num_prompts else 0.0,
+        "generated_step_count": int(generated_step_count),
+        "mean_kl_divergence": global_aggregate["kl_divergence"] / generated_step_count_float
+        if generated_step_count_float
+        else 0.0,
+        "mean_cosine_similarity": global_aggregate["cosine_similarity"] / generated_step_count_float
+        if generated_step_count_float
+        else 0.0,
         "mean_absolute_logit_delta": (
-            global_aggregate["mean_absolute_logit_delta"] / num_prompts if num_prompts else 0.0
+            global_aggregate["mean_absolute_logit_delta"] / generated_step_count_float
+            if generated_step_count_float
+            else 0.0
         ),
         "mean_max_absolute_logit_delta": (
-            global_aggregate["max_absolute_logit_delta"] / num_prompts if num_prompts else 0.0
+            global_aggregate["max_absolute_logit_delta"] / generated_step_count_float
+            if generated_step_count_float
+            else 0.0
         ),
         "mean_overlapping_top_k_count": (
-            global_aggregate["overlap_count"] / num_prompts if num_prompts else 0.0
+            global_aggregate["overlap_count"] / generated_step_count_float
+            if generated_step_count_float
+            else 0.0
         ),
     }
 

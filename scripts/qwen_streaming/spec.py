@@ -129,7 +129,7 @@ class QwenStreamedModelSpec:
     @classmethod
     def from_model_id(cls, model_id: str) -> "QwenStreamedModelSpec":
         local_dir = Path(
-            snapshot_download(model_id=model_id, allow_patterns=_WEIGHT_ALLOW_PATTERNS)
+            snapshot_download(repo_id=model_id, allow_patterns=_WEIGHT_ALLOW_PATTERNS)
         ).resolve()
 
         config = _read_model_config(local_dir)
@@ -153,11 +153,6 @@ class QwenStreamedModelSpec:
 
         if hidden_size % num_attention_heads != 0:
             raise ValueError("hidden_size must be divisible by num_attention_heads.")
-
-        if hidden_size != num_attention_heads * head_dim:
-            raise ValueError(
-                "head_dim must match hidden_size // num_attention_heads for Qwen3 config."
-            )
 
         index_path = local_dir / "model.safetensors.index.json"
         if index_path.is_file():

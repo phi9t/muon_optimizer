@@ -125,7 +125,7 @@ def _make_linear_shards(config: dict[str, object], tie_word_embeddings: bool) ->
 def _patch_snapshot(monkeypatch, local_dir: Path):
     monkeypatch.setattr(
         "scripts.qwen_streaming.spec.snapshot_download",
-        lambda model_id, allow_patterns=(): str(local_dir),
+        lambda repo_id, allow_patterns=(): str(local_dir),
     )
 
 

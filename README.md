@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/logo.png" alt="Muon Optimizer" width="160" />
+</p>
+
 # Muon Optimizer
 
 [![CI/CD Pipeline](https://github.com/phi9t/muon_optimizer/actions/workflows/ci.yml/badge.svg)](https://github.com/phi9t/muon_optimizer/actions/workflows/ci.yml)

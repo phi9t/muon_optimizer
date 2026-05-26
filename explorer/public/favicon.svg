@@ -1,11 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" role="img" aria-label="Muon">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Muon">
   <defs>
-    <linearGradient id="muonGrad" x1="8" y1="6" x2="40" y2="42" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#6366f1"/>
-      <stop offset="1" stop-color="#8b5cf6"/>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#a855f7"/>
     </linearGradient>
   </defs>
-  <circle cx="24" cy="24" r="18" fill="none" stroke="url(#muonGrad)" stroke-width="2.5"/>
-  <path fill="none" stroke="#6366f1" stroke-width="2.25" stroke-linecap="round" d="M14 28 L24 14 L34 28"/>
-  <circle cx="24" cy="30" r="3" fill="#06b6d4"/>
+  <ellipse cx="16" cy="16" rx="14" ry="5.5" fill="none" stroke="#22d3ee" stroke-width="1" opacity="0.8" transform="rotate(-35 16 16)"/>
+  <ellipse cx="16" cy="16" rx="14" ry="5.5" fill="none" stroke="#22d3ee" stroke-width="1" opacity="0.8" transform="rotate(35 16 16)"/>
+  <g transform="rotate(12 16 16)">
+    <rect x="7" y="7" width="7" height="7" rx="1.5" fill="url(#g)"/>
+    <rect x="17" y="7" width="7" height="7" rx="1.5" fill="url(#g)" opacity="0.9"/>
+    <rect x="7" y="17" width="7" height="7" rx="1.5" fill="url(#g)" opacity="0.85"/>
+    <rect x="17" y="17" width="7" height="7" rx="1.5" fill="url(#g)" opacity="0.95"/>
+  </g>
 </svg>

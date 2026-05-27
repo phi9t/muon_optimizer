@@ -2,16 +2,14 @@ import { useState } from 'react'
 import { ArrowLeft } from 'lucide-react'
 import { REPO_HOME, logoMarkUrl } from './lib/assets'
 import BenchmarksExplorer from './benchmarks/BenchmarksExplorer'
-import LandscapesExplorer from './landscapes/LandscapesExplorer'
 import ReferenceExplorer from './reference/ReferenceExplorer'
 import QwenLogitsExplorer from './qwen/QwenLogitsExplorer'
 import MatrixDynamicsExplorer from './matrix/MatrixDynamicsExplorer'
 
-export type ExplorerFamily = 'benchmarks' | 'landscapes' | 'reference' | 'qwen' | 'matrix'
+export type ExplorerFamily = 'benchmarks' | 'reference' | 'qwen' | 'matrix'
 
 const FAMILY_SUBTITLES: Record<ExplorerFamily, string> = {
   benchmarks: 'MNIST CNN training — Muon vs SGD vs Adam',
-  landscapes: '2D loss surfaces and optimizer trajectories',
   reference: 'Algorithm overview, API classes, and usage snippets',
   qwen: 'Qwen teacher-student logits comparison',
   matrix: 'Weight conditioning and singular value spectra',
@@ -61,14 +59,7 @@ export default function App() {
             >
               Benchmarks
             </button>
-            <button
-              type="button"
-              className={`family-switch-btn ${family === 'landscapes' ? 'active' : ''}`}
-              aria-pressed={family === 'landscapes'}
-              onClick={() => setFamily('landscapes')}
-            >
-              2D Landscapes
-            </button>
+
             <button
               type="button"
               className={`family-switch-btn ${family === 'reference' ? 'active' : ''}`}
@@ -98,7 +89,6 @@ export default function App() {
 
         <div id="main-content">
           {family === 'benchmarks' && <BenchmarksExplorer />}
-          {family === 'landscapes' && <LandscapesExplorer />}
           {family === 'reference' && <ReferenceExplorer />}
           {family === 'qwen' && <QwenLogitsExplorer />}
           {family === 'matrix' && <MatrixDynamicsExplorer />}

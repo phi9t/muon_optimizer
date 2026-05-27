@@ -326,12 +326,6 @@ def export_index(profile: str) -> None:
                 "description": "Small CNN on MNIST comparing SGD, Adam, and Muon.",
                 "data_file": "mnist.json",
             },
-            {
-                "id": "landscapes",
-                "name": "2D Landscapes",
-                "description": "Classic 2D optimization benchmarks with trajectory overlays.",
-                "data_file": "landscapes/index.json",
-            },
         ],
     }
     (OUTPUT_DIR / "index.json").write_text(json.dumps(index, indent=2), encoding="utf-8")
@@ -360,7 +354,6 @@ def main() -> None:
     print(f"Exporting profile={args.profile} to {OUTPUT_DIR}")
     export_definitions()
     export_mnist(args.profile, mnist_epochs)
-    export_landscapes(args.profile, landscape_steps)
     export_index(args.profile)
     print("Running Matrix Factorization experiment...")
     run_mf_experiment()

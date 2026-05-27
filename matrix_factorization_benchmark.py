@@ -1,6 +1,5 @@
 import json
 import torch
-import torch.nn as nn
 from pathlib import Path
 import matplotlib.pyplot as plt
 from rich.console import Console
@@ -14,21 +13,20 @@ def make_ill_conditioned_matrix(dim: int = 64) -> torch.Tensor:
     V, _ = torch.linalg.qr(torch.randn(dim, dim))
     return U @ torch.diag(s) @ V.T
 
-def run_mf_experiment():
-    # Set seed for reproducibility
-    torch.manual_seed(42)
-    
-    dim = 64
-    steps = 500
-    M_target = make_ill_conditioned_matrix(dim)
-    X = torch.randn(dim, 256)
-    Y = M_target @ X
-
+def run_mf_experiment_logic(
+    dim: int,
+    steps: int,
+    X: torch.Tensor,
+    Y: torch.Tensor,
+    W1_init: torch.Tensor,
+    W2_init: torch.Tensor,
+    W3_init: torch.Tensor,
+) -> dict:
     results = {}
     for opt_name in ["SGD", "AdamW", "Muon"]:
-        W1 = (torch.randn(dim, dim) * 0.1).requires_grad_(True)
-        W2 = (torch.randn(dim, dim) * 0.1).requires_grad_(True)
-        W3 = (torch.randn(dim, dim) * 0.1).requires_grad_(True)
+        W1 = W1_init.clone().detach().requires_grad_(True)
+        W2 = W2_init.clone().detach().requires_grad_(True)
+        W3 = W3_init.clone().detach().requires_grad_(True)
         
         if opt_name == "SGD":
             opt = torch.optim.SGD([W1, W2, W3], lr=0.05, momentum=0.95)
@@ -56,7 +54,8 @@ def run_mf_experiment():
                 cond = float((s_vals[0] / (s_vals[-1] + 1e-8)).item())
                 cond_nums.append(cond)
                 
-                if step in [0, 50, 100, 250, 499]:
+                # Record snapshots at standard checkpoints and the final step
+                if step in [0, 50, 100, 250, 499] or step == steps - 1:
                     sv_snapshots[str(step)] = s_vals.tolist()
 
         results[opt_name] = {
@@ -64,6 +63,24 @@ def run_mf_experiment():
             "cond_numbers": cond_nums,
             "singular_values": sv_snapshots
         }
+    return results
+
+def run_mf_experiment() -> None:
+    # Set seed for reproducibility
+    torch.manual_seed(42)
+    
+    dim = 64
+    steps = 500
+    M_target = make_ill_conditioned_matrix(dim)
+    X = torch.randn(dim, 256)
+    Y = M_target @ X
+
+    # Draw template weights outside the optimizer loop for fairness
+    W1_init = torch.randn(dim, dim) * 0.1
+    W2_init = torch.randn(dim, dim) * 0.1
+    W3_init = torch.randn(dim, dim) * 0.1
+
+    results = run_mf_experiment_logic(dim, steps, X, Y, W1_init, W2_init, W3_init)
 
     # Save JSON data
     out_dir = Path("explorer/public/data")

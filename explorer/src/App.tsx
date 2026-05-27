@@ -5,14 +5,16 @@ import BenchmarksExplorer from './benchmarks/BenchmarksExplorer'
 import LandscapesExplorer from './landscapes/LandscapesExplorer'
 import ReferenceExplorer from './reference/ReferenceExplorer'
 import QwenLogitsExplorer from './qwen/QwenLogitsExplorer'
+import MatrixDynamicsExplorer from './matrix/MatrixDynamicsExplorer'
 
-export type ExplorerFamily = 'benchmarks' | 'landscapes' | 'reference' | 'qwen'
+export type ExplorerFamily = 'benchmarks' | 'landscapes' | 'reference' | 'qwen' | 'matrix'
 
 const FAMILY_SUBTITLES: Record<ExplorerFamily, string> = {
   benchmarks: 'MNIST CNN training — Muon vs SGD vs Adam',
   landscapes: '2D loss surfaces and optimizer trajectories',
   reference: 'Algorithm overview, API classes, and usage snippets',
   qwen: 'Qwen teacher-student logits comparison',
+  matrix: 'Weight conditioning and singular value spectra',
 }
 
 export default function App() {
@@ -83,6 +85,14 @@ export default function App() {
             >
               Qwen Logits
             </button>
+            <button
+              type="button"
+              className={`family-switch-btn ${family === 'matrix' ? 'active' : ''}`}
+              aria-pressed={family === 'matrix'}
+              onClick={() => setFamily('matrix')}
+            >
+              Matrix Dynamics
+            </button>
           </div>
         </header>
 
@@ -91,6 +101,7 @@ export default function App() {
           {family === 'landscapes' && <LandscapesExplorer />}
           {family === 'reference' && <ReferenceExplorer />}
           {family === 'qwen' && <QwenLogitsExplorer />}
+          {family === 'matrix' && <MatrixDynamicsExplorer />}
         </div>
       </div>
     </div>

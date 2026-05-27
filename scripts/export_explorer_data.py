@@ -30,6 +30,9 @@ from mnist_optimizer_benchmark import (  # noqa: E402
     train_with_optimizer,
 )
 from muon_optimizer import Muon  # noqa: E402
+from matrix_factorization_benchmark import run_mf_experiment  # noqa: E402
+from transformer_spectral_benchmark import run_vit_experiment  # noqa: E402
+
 
 OUTPUT_DIR = REPO_ROOT / "explorer" / "public" / "data"
 GRID_SIZE = 50
@@ -359,6 +362,10 @@ def main() -> None:
     export_mnist(args.profile, mnist_epochs)
     export_landscapes(args.profile, landscape_steps)
     export_index(args.profile)
+    print("Running Matrix Factorization experiment...")
+    run_mf_experiment()
+    print("Running ViT MNIST experiment...")
+    run_vit_experiment()
     print("Done.")
 
 

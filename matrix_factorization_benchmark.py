@@ -83,7 +83,8 @@ def run_mf_experiment() -> None:
     results = run_mf_experiment_logic(dim, steps, X, Y, W1_init, W2_init, W3_init)
 
     # Save JSON data
-    out_dir = Path("explorer/public/data")
+    REPO_ROOT = Path(__file__).resolve().parent
+    out_dir = REPO_ROOT / "explorer" / "public" / "data"
     out_dir.mkdir(parents=True, exist_ok=True)
     with open(out_dir / "matrix_factorization.json", "w") as f:
         json.dump(results, f, indent=2)
@@ -108,8 +109,9 @@ def run_mf_experiment() -> None:
     plt.legend()
     
     plt.tight_layout()
-    Path("assets").mkdir(exist_ok=True)
-    plt.savefig("assets/matrix_factorization_benchmark.png")
+    assets_dir = REPO_ROOT / "assets"
+    assets_dir.mkdir(exist_ok=True)
+    plt.savefig(assets_dir / "matrix_factorization_benchmark.png")
     plt.close()
 
     # Render console table

@@ -274,13 +274,42 @@ uv run flake8 muon_optimizer.py
 uv run mypy muon_optimizer.py
 ```
 
-## Architecture Notes
+## Mathematical & Architectural Deep Dive
 
-- **Distributed Training**: Uses `torch.distributed.all_gather()` for parameter synchronization
-- **Numerical Stability**: All orthogonalization performed in bfloat16 with 1e-7 epsilon
-- **Quintic Newton-Schulz**: Optimized coefficients (3.4445, -4.7750, 2.0315) for convergence
-- **Automatic Reshaping**: 4D conv weights reshaped to 2D for orthogonalization
-- **Parameter Sorting**: Automatically sorted by size for efficient distributed processing
+For a detailed, step-by-step analysis, see [muon_optimizer_deep_dive.md](file:///Users/phi9t/.gemini/antigravity-cli/brain/c1d519cf-5916-4066-8f5d-ac2ecd02f625/muon_optimizer_deep_dive.md) or refer to the summary below:
+
+### 1. Mathematical Underpinnings
+
+Muon updates parameter weights using **orthogonalized momentum**. Standard SGD-momentum updates are replaced with the nearest orthogonal matrix (in terms of the Frobenius norm).
+
+#### 1.1 Momentum & Nesterov Update
+For a given parameter matrix $W_t \in \mathbb{R}^{m \times n}$ and its gradient $G_t$, Muon maintains a momentum buffer $M_t$:
+- **Momentum update**: $M_t = \beta M_{t-1} + (1 - \beta) G_t$
+- **Nesterov momentum (optional)**: $U_t = (1 - \beta) G_t + \beta M_t$ (otherwise $U_t = M_t$)
+
+#### 1.2 Orthogonalization via Newton-Schulz Quintic Iteration
+To find the nearest orthogonal matrix, Muon approximates the polar decomposition factor using a quintic (degree-5) Newton-Schulz iteration:
+$$X_{k+1} = a X_k + B X_k$$
+$$B = b A_k + c A_k^2, \quad A_k = X_k X_k^T$$
+
+Optimized coefficients:
+- $a = 3.4445$
+- $b = -4.7750$
+- $c = 2.0315$
+
+#### 1.3 Polar Express Iteration
+By default (`polar_method="polar_express"`), Muon uses the Polar Express method which scales coefficients step-by-step using a safety factor (`1.01`) to prevent overflow in `bfloat16` precision:
+$$a_t' = a_t / 1.01, \quad b_t' = b_t / 1.01^3, \quad c_t' = c_t / 1.01^5$$
+
+---
+
+### 2. Code Architecture & Key Decisions
+
+- **Parameter Routing**: Hidden matrix weights (2D+) are updated via Muon. 1D parameters, embeddings, and normalization scales/biases are routed to AdamW.
+- **Rectangular Matrices**: If rows > columns ($m > n$), Muon transposes the matrix before running Newton-Schulz, computing updates on smaller matrices to reduce complexity from $O(m^3)$ to $O(n^3)$.
+- **4D Convolutional Kernels**: PyTorch 4D conv weights are flattened to 2D before orthogonalization and reshaped back.
+- **Distributed Training (`all_gather`)**: In multi-GPU setups, parameters are sorted by size, padded to match the world size, and partitioned so each GPU orthogonalizes a subset of parameters. Devices then use `dist.all_gather` to broadcast and sync updates.
+
 
 ## Known Limitations
 

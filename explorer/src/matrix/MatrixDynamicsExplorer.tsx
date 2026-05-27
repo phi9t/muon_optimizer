@@ -464,9 +464,9 @@ export default function MatrixDynamicsExplorer() {
             <div className="educational-banner">
               <Info size={16} aria-hidden="true" />
               <div>
-                <strong>Deep Matrix Factorization Dynamics (6-layer linear network)</strong>
+                <strong>Deep Matrix Factorization Dynamics (3-layer linear network)</strong>
                 <br />
-                This experiment factorizes a matrix by training a chain of linear layers W = W_L * W_(L-1) * ... * W_1. 
+                This experiment factorizes a matrix by training a chain of linear layers W = W₃ * W₂ * W₁. 
                 Without proper optimization, linear networks suffer from ill-conditioning, causing the condition number 
                 κ(W₂) of intermediate layers to explode. Muon utilizes online orthogonalization (via Newton-Schulz iteration) 
                 to keep weight matrices close to the manifold of orthogonal matrices, stabilizing singular values and accelerating convergence.

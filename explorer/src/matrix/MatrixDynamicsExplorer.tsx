@@ -466,9 +466,9 @@ export default function MatrixDynamicsExplorer() {
               <div>
                 <strong>Deep Matrix Factorization Dynamics (6-layer linear network)</strong>
                 <br />
-                This experiment factorizes a matrix by training a chain of linear layers W = W_L W_(L-1) ... W_1. 
+                This experiment factorizes a matrix by training a chain of linear layers W = W_L * W_(L-1) * ... * W_1. 
                 Without proper optimization, linear networks suffer from ill-conditioning, causing the condition number 
-                $\kappa(W_2)$ of intermediate layers to explode. Muon utilizes online orthogonalization (via Newton-Schulz iteration) 
+                κ(W₂) of intermediate layers to explode. Muon utilizes online orthogonalization (via Newton-Schulz iteration) 
                 to keep weight matrices close to the manifold of orthogonal matrices, stabilizing singular values and accelerating convergence.
               </div>
             </div>
@@ -540,7 +540,7 @@ export default function MatrixDynamicsExplorer() {
                         key={opt}
                         type="monotone"
                         dataKey={opt}
-                        stroke={OPT_COLORS[opt]}
+                        stroke={OPT_COLORS[opt] || '#9ca3af'}
                         dot={false}
                         strokeWidth={2}
                       />
@@ -592,7 +592,7 @@ export default function MatrixDynamicsExplorer() {
                         key={opt}
                         type="monotone"
                         dataKey={opt}
-                        stroke={OPT_COLORS[opt]}
+                        stroke={OPT_COLORS[opt] || '#9ca3af'}
                         dot={false}
                         strokeWidth={2}
                       />
@@ -642,8 +642,8 @@ export default function MatrixDynamicsExplorer() {
                 </div>
 
                 <p className="text-secondary" style={{ fontSize: '13px', margin: '0 0 8px 0' }}>
-                  Viewing spectrum profile of $W_2$ at **Step {mfStep}**. Flat spectra indicate orthogonal weights 
-                  ($\sigma_i \approx 1$), which prevents gradient vanishing or exploding across deep layers.
+                  Viewing spectrum profile of W₂ at **Step {mfStep}**. Flat spectra indicate orthogonal weights 
+                  (σ_i ≈ 1), which prevents gradient vanishing or exploding across deep layers.
                 </p>
 
                 <ResponsiveContainer width="100%" height={320}>
@@ -659,7 +659,7 @@ export default function MatrixDynamicsExplorer() {
                           key={opt}
                           type="monotone"
                           dataKey={opt}
-                          stroke={OPT_COLORS[opt]}
+                          stroke={OPT_COLORS[opt] || '#9ca3af'}
                           dot={false}
                           strokeWidth={2}
                         />
@@ -676,7 +676,7 @@ export default function MatrixDynamicsExplorer() {
                         <Bar
                           key={opt}
                           dataKey={opt}
-                          fill={OPT_COLORS[opt]}
+                          fill={OPT_COLORS[opt] || '#9ca3af'}
                           radius={[2, 2, 0, 0]}
                         />
                       ))}
@@ -769,7 +769,7 @@ export default function MatrixDynamicsExplorer() {
                         key={opt}
                         type="monotone"
                         dataKey={opt}
-                        stroke={OPT_COLORS[opt]}
+                        stroke={OPT_COLORS[opt] || '#9ca3af'}
                         dot={false}
                         strokeWidth={2}
                       />
@@ -797,7 +797,7 @@ export default function MatrixDynamicsExplorer() {
                         key={opt}
                         type="monotone"
                         dataKey={opt}
-                        stroke={OPT_COLORS[opt]}
+                        stroke={OPT_COLORS[opt] || '#9ca3af'}
                         dot={false}
                         strokeWidth={2}
                       />
@@ -847,7 +847,7 @@ export default function MatrixDynamicsExplorer() {
                 </div>
 
                 <p className="text-secondary" style={{ fontSize: '13px', margin: '0 0 8px 0' }}>
-                  Viewing spectrum profile of Query Projection weight matrix ($W_Q$) at **Step {tsStep}**. 
+                  Viewing spectrum profile of Query Projection weight matrix (W_Q) at **Step {tsStep}**. 
                   Muon+Aux restrains singular value decay, ensuring that the projection maintains high rank/dimension 
                   expressiveness compared to standard AdamW.
                 </p>
@@ -865,7 +865,7 @@ export default function MatrixDynamicsExplorer() {
                           key={opt}
                           type="monotone"
                           dataKey={opt}
-                          stroke={OPT_COLORS[opt]}
+                          stroke={OPT_COLORS[opt] || '#9ca3af'}
                           dot={false}
                           strokeWidth={2}
                         />
@@ -882,7 +882,7 @@ export default function MatrixDynamicsExplorer() {
                         <Bar
                           key={opt}
                           dataKey={opt}
-                          fill={OPT_COLORS[opt]}
+                          fill={OPT_COLORS[opt] || '#9ca3af'}
                           radius={[2, 2, 0, 0]}
                         />
                       ))}
